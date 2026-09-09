@@ -41,7 +41,7 @@ public class UserClient {
 
     public Account register(String username, String email, String displayName, String password) {
         return http.post().uri("/api/accounts").contentType(MediaType.APPLICATION_JSON)
-                .body(Map.of("username", username, "email", email,
+                .body(Map.of("username", username, "email", email == null ? "" : email,
                         "displayName", displayName == null ? "" : displayName, "password", password))
                 .retrieve().body(Account.class);
     }
@@ -52,7 +52,8 @@ public class UserClient {
 
     public Account updateProfile(long id, String email, String displayName) {
         return http.put().uri("/api/accounts/{id}", id).contentType(MediaType.APPLICATION_JSON)
-                .body(Map.of("email", email, "displayName", displayName == null ? "" : displayName))
+                .body(Map.of("email", email == null ? "" : email,
+                        "displayName", displayName == null ? "" : displayName))
                 .retrieve().body(Account.class);
     }
 

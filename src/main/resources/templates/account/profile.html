@@ -22,8 +22,8 @@
     <div class="card">
         <h2>Profile</h2>
         <form th:action="@{/account/profile}" method="post" class="stack">
-            <div class="field"><label>Email</label>
-                <input type="email" name="email" th:value="${account.email}" required></div>
+            <div class="field"><label>Email <span class="muted">(optional)</span></label>
+                <input type="email" name="email" th:value="${account.email}"></div>
             <div class="field"><label>Display name</label>
                 <input type="text" name="displayName" th:value="${account.displayName}"></div>
             <button type="submit" class="btn">Save</button>

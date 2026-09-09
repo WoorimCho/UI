@@ -79,7 +79,7 @@ public class AuthController {
 
     @PostMapping("/register")
     public String register(@RequestParam String username,
-                           @RequestParam String email,
+                           @RequestParam(required = false) String email,
                            @RequestParam(required = false) String displayName,
                            @RequestParam String password,
                            HttpSession session, Model model) {
@@ -90,7 +90,7 @@ public class AuthController {
                     account.displayName(), bffCookie));
             return "redirect:/account";
         } catch (HttpClientErrorException.BadRequest e) {
-            model.addAttribute("error", "Check the form: username 3–50 chars, a valid email, password ≥ 8 chars, and both must be unused.");
+            model.addAttribute("error", "Check the form: username 3–50 chars, password ≥ 8 chars, a valid email if you give one, and username/email must be unused.");
             model.addAttribute("username", username);
             model.addAttribute("email", email);
             model.addAttribute("displayName", displayName);

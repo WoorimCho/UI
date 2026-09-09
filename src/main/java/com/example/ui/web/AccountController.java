@@ -52,7 +52,7 @@ public class AccountController {
     }
 
     @PostMapping("/account/profile")
-    public String updateProfile(@RequestParam String email,
+    public String updateProfile(@RequestParam(required = false) String email,
                                 @RequestParam(required = false) String displayName,
                                 HttpSession session) {
         long id = accountId(session);
