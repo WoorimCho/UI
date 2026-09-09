@@ -1,9 +1,11 @@
 package com.example.ui.web;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.ResourceAccessException;
 
@@ -41,6 +43,7 @@ public class UiExceptionHandler {
     }
 
     @ExceptionHandler(ResourceAccessException.class)
+    @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
     public String downstreamUnreachable(ResourceAccessException ex, Model model) {
         model.addAttribute("status", 503);
         model.addAttribute("heading", "A service is unreachable");

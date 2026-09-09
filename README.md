@@ -63,12 +63,22 @@ cd .. && docker compose up --build ui      # with the rest of the stack
 | `BFF_URL` | `http://localhost:8080` |
 | `ZIPKIN_ENDPOINT` | `http://localhost:9411/api/v2/spans` |
 | `TRACING_SAMPLE_RATE` | `1.0` |
+| `DOWNSTREAM_CONNECT_TIMEOUT` / `DOWNSTREAM_READ_TIMEOUT` | `2s` / `8s` — outbound HTTP timeouts |
 
 ## Tests
 
 ```bash
 ./mvnw test     # 5: context load + @WebMvcTest page renders + auth-guard redirect
 ```
+
+## Resilience
+
+Every downstream `RestClient` (the three catalogues + the BFF) has a short
+connect/read timeout (`spring.http.clients.*`) and a per-service **circuit
+breaker** (`config/DownstreamResilience` + `CircuitBreakerInterceptor`,
+resilience4j). A timeout or a 5xx is a fault; a 4xx is not. When a breaker opens,
+the page fails fast to the 503 error page instead of hanging. Breaker state is on
+`/actuator/prometheus` (`resilience4j_circuitbreaker_*`).
 
 ## Notes / known gaps
 
