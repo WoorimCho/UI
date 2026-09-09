@@ -76,12 +76,13 @@ cd .. && docker compose up --build ui      # with the rest of the stack
 
 ## Resilience
 
-Every downstream `RestClient` (the three catalogues + the BFF) has a short
-connect/read timeout (`spring.http.clients.*`) and a per-service **circuit
-breaker** (`config/DownstreamResilience` + `CircuitBreakerInterceptor`,
-resilience4j). A timeout or a 5xx is a fault; a 4xx is not. When a breaker opens,
-the page fails fast to the 503 error page instead of hanging. Breaker state is on
-`/actuator/prometheus` (`resilience4j_circuitbreaker_*`).
+Every downstream `RestClient` (the three catalogues, the BFF, and
+recipe-crawler) has a short connect/read timeout (`spring.http.clients.*`) and a
+per-service **circuit breaker** (`config/DownstreamResilience` +
+`CircuitBreakerInterceptor`, resilience4j). A timeout or a 5xx is a fault; a 4xx
+is not. When a breaker opens, the page fails fast to the 503 error page instead
+of hanging. Breaker state is on `/actuator/prometheus`
+(`resilience4j_circuitbreaker_*`).
 
 ## Notes / known gaps
 
@@ -96,7 +97,9 @@ the page fails fast to the 503 error page instead of hanging. Breaker state is o
 
 ## Status
 
-**v1 complete.** All catalogue + BFF surfaces represented; Phase 4 features
-(structured quantities, calculators incl. per-gram, CSV import, random, themes,
-name-based forms, nutrition-reference add, favourite toggle) done and
-browser-verified against the Docker stack.
+**v1 complete.** All catalogue + BFF surfaces represented; Phase 4 features done
+and browser-verified against the Docker stack: structured quantities, the
+calculators (per-gram, per-100 g, **weight ⇄ volume** via density, **live
+portion slider**), CSV import, **import from URL**, random, themes, name-based
+forms, nutrition-reference add, favourite toggle, ingredient density, optional
+registration email.
