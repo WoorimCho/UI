@@ -7,6 +7,7 @@ import com.example.ui.client.RecipeClient;
 import com.example.ui.client.UserClient;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import com.example.ui.config.SecurityConfig;
 import com.example.ui.config.WebConfig;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
@@ -28,7 +29,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * this is the view + routing layer, not an integration test.
  */
 @WebMvcTest({HomeController.class, AuthController.class, IngredientController.class, AccountController.class})
-@Import({SessionSupport.class, AuthInterceptor.class, GlobalModelAdvice.class, WebConfig.class})
+@Import({SessionSupport.class, AuthInterceptor.class, GlobalModelAdvice.class, WebConfig.class, SecurityConfig.class})
 class PagesRenderTest {
 
     @Autowired

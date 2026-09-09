@@ -2,6 +2,7 @@ package com.example.ui.web;
 
 import com.example.ui.client.BffClient;
 import com.example.ui.client.UserClient;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -40,7 +41,7 @@ public class AuthController {
     public String login(@RequestParam String identifier,
                         @RequestParam String password,
                         @RequestParam(required = false) String next,
-                        HttpSession session, Model model) {
+                        HttpServletRequest request, HttpSession session, Model model) {
         UserClient.Identity id;
         try {
             id = users.authenticate(identifier, password);
@@ -53,6 +54,7 @@ public class AuthController {
         // Also establish a BFF session for the composed view + calculators.
         String bffCookie = bff.login(id.username(), password);
 
+        request.changeSessionId();                 // new id on privilege change (SECURITY.md M1)
         sessions.store(session, new CurrentUser(id.accountId(), id.username(), id.displayName(), bffCookie));
         return "redirect:" + (StringUtils.hasText(next) && next.startsWith("/") ? next : "/");
     }
@@ -82,10 +84,11 @@ public class AuthController {
                            @RequestParam(required = false) String email,
                            @RequestParam(required = false) String displayName,
                            @RequestParam String password,
-                           HttpSession session, Model model) {
+                           HttpServletRequest request, HttpSession session, Model model) {
         try {
             var account = users.register(username, email, displayName, password);
             String bffCookie = bff.login(account.username(), password);
+            request.changeSessionId();             // new id on privilege change (SECURITY.md M1)
             sessions.store(session, new CurrentUser(account.id(), account.username(),
                     account.displayName(), bffCookie));
             return "redirect:/account";

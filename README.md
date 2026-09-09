@@ -89,6 +89,25 @@ The **recipe-crawler** client is the exception: a 3 s connect timeout but a
 breaker (an intentionally slow call would otherwise count against its slow-call
 rate).
 
+## Security
+
+`spring-boot-starter-security` + `config/SecurityConfig` — `permitAll()` (the UI
+keeps its own session guard; anonymous browsing is a feature), Spring's form
+login / basic / logout disabled. It's on for the cross-cutting hardening:
+
+- **CSRF** on for state-changing form posts; `th:action` auto-injects the hidden
+  `_csrf` field. The one `fetch()` (portion slider) is a GET.
+- `JSESSIONID`: `SameSite=Strict`, `HttpOnly`, cookie-only (no `;jsessionid=`).
+- Headers: `X-Frame-Options: DENY`, `nosniff`, a CSP (inline script/style still
+  allowed — nonces are a later pass), `Referrer-Policy: no-referrer`.
+- `AuthController` rotates the session id (`request.changeSessionId()`) on
+  login / register.
+- Direct calls to the catalogues / User / crawler carry an HMAC
+  `X-Internal-Auth` header (`internal/`), signed with the session's account id.
+
+See `../IngredientCatalogue/SECURITY.md` for the full assessment (H2 / M1 / M5 /
+C1 / C2 addressed 2026-09-09).
+
 ## Notes / known gaps
 
 - `reactive-streams` is a direct dependency — `RestClient`'s multipart writer
@@ -96,9 +115,6 @@ rate).
 - `RecipeForm` is built from a `@RequestParam MultiValueMap`, not
   `@ModelAttribute` — Spring comma-splits a single value bound to `List<String>`,
   which would shred a recipe step.
-- **No Spring Security on the UI** → no CSRF tokens, `JSESSIONID` has no
-  `SameSite`, no `X-Frame-Options`/CSP, session id not rotated on login. See
-  `../IngredientCatalogue/SECURITY.md` (findings H2, M1, M5).
 
 ## Status
 
