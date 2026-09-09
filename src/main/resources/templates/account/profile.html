@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Your account')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+
+<main class="container" style="max-width: 620px;">
+    <div class="page-head">
+        <h1 th:text="'👤 ' + ${account.displayName != null and !account.displayName.isBlank() ? account.displayName : account.username}">You</h1>
+        <p class="muted">@<span th:text="${account.username}">username</span></p>
+    </div>
+
+    <div class="alert ok" th:if="${passwordChanged}">Password updated.</div>
+    <div class="alert error" th:if="${passwordError}" th:text="${passwordError}"></div>
+
+    <nav class="toolbar">
+        <a class="btn btn-sm ghost" th:href="@{/account}">Profile</a>
+        <a class="btn btn-sm ghost" th:href="@{/account/restrictions}">Restrictions</a>
+        <a class="btn btn-sm ghost" th:href="@{/account/favourites}">Favourites</a>
+    </nav>
+
+    <div class="card">
+        <h2>Profile</h2>
+        <form th:action="@{/account/profile}" method="post" class="stack">
+            <div class="field"><label>Email</label>
+                <input type="email" name="email" th:value="${account.email}" required></div>
+            <div class="field"><label>Display name</label>
+                <input type="text" name="displayName" th:value="${account.displayName}"></div>
+            <button type="submit" class="btn">Save</button>
+        </form>
+    </div>
+
+    <div class="card">
+        <h2>Change password</h2>
+        <form th:action="@{/account/password}" method="post" class="stack">
+            <div class="field"><label>Current password</label>
+                <input type="password" name="currentPassword" required></div>
+            <div class="field"><label>New password</label>
+                <input type="password" name="newPassword" required minlength="8"></div>
+            <button type="submit" class="btn">Change password</button>
+        </form>
+    </div>
+
+    <div class="card">
+        <h2>Theme</h2>
+        <p class="muted">Changes the look for this browser. Applies immediately.</p>
+        <form th:action="@{/settings/theme}" method="post" class="inline-form">
+            <input type="hidden" name="back" value="/account">
+            <div class="field">
+                <label for="theme">Preset</label>
+                <select id="theme" name="theme" onchange="this.form.submit()">
+                    <option th:each="e : ${themes}"
+                            th:value="${e.key}" th:text="${e.value}"
+                            th:selected="${e.key == uiTheme}">Cherry Blossom</option>
+                </select>
+            </div>
+            <noscript><button type="submit" class="btn btn-sm">Apply</button></noscript>
+        </form>
+    </div>
+
+    <div class="card">
+        <h3>Your restriction codes</h3>
+        <div class="chips">
+            <span class="chip" th:each="c : ${account.restrictionsOrEmpty()}" th:text="${c}">code</span>
+            <span class="muted" th:if="${account.restrictionsOrEmpty().isEmpty()}">None set —
+                <a th:href="@{/account/restrictions}">add some</a>.</span>
+        </div>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

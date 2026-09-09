@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Calories — ' + ${result.recipeName})}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+
+<main class="container" style="max-width: 600px;">
+    <div class="page-head">
+        <h1 th:text="'🔥 Calories · ' + ${result.recipeName}">Calories</h1>
+    </div>
+
+    <form th:action="@{/recipes/{id}/calories(id=${recipeId})}" method="get" class="toolbar">
+        <div class="field" style="margin:0;"><label>Servings</label>
+            <input type="number" name="servings" min="1" th:value="${servings}" style="max-width:110px;"></div>
+        <button type="submit" class="btn btn-sm">Recalculate</button>
+        <span class="spacer"></span>
+        <a class="btn btn-sm ghost" th:href="@{/recipes/{id}(id=${recipeId})}">← recipe</a>
+    </form>
+
+    <div class="stats">
+        <div class="stat"><div class="n" th:text="${result.totalKcal != null ? #numbers.formatDecimal(result.totalKcal,1,0) : '—'}">0</div><div class="k">Total kcal</div></div>
+        <div class="stat"><div class="n" th:text="${result.perServingKcal != null ? #numbers.formatDecimal(result.perServingKcal,1,0) : '—'}">0</div><div class="k" th:text="'kcal / serving (÷' + ${result.servings} + ')'">per serving</div></div>
+        <div class="stat"><div class="n" th:text="${result.countedLines} + '/' + ${result.totalLines}">0/0</div><div class="k">Lines counted</div></div>
+    </div>
+
+    <div class="stats">
+        <div class="stat"><div class="n" th:text="${result.kcalPer100g != null ? #numbers.formatDecimal(result.kcalPer100g,1,0) : '—'}">0</div><div class="k">kcal / 100 g</div></div>
+        <div class="stat"><div class="n" th:text="${result.kcalPerGram != null ? #numbers.formatDecimal(result.kcalPerGram,1,2) : '—'}">0</div><div class="k">kcal / gram</div></div>
+        <div class="stat"><div class="n" th:text="${result.countedGrams != null ? #numbers.formatDecimal(result.countedGrams,1,0) + ' g' : '—'}">0 g</div><div class="k">Counted weight</div></div>
+    </div>
+    <p class="hint">Energy density = total kcal ÷ the weight of the counted lines.</p>
+
+    <p class="muted" th:if="${result.countedLines < result.totalLines}">
+        Some lines couldn't be weighed (volume/count unit or no nutrition data) — see the
+        <a th:href="@{/recipes/{id}/nutrition(id=${recipeId},servings=${servings})}">full nutrition breakdown</a>.
+    </p>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

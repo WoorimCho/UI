@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<!--
+  Shared fragments. Pages do:
+    <head th:replace="~{fragments/layout :: head('Title')}"></head>
+    <nav  th:replace="~{fragments/layout :: nav}"></nav>
+    ...content...
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+-->
+<head th:fragment="head(title)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- apply the saved theme before first paint (no flash) -->
+    <script>
+        (function () {
+            var m = document.cookie.match(/(?:^|; )ui\.theme=([^;]+)/);
+            var t = m ? decodeURIComponent(m[1]) : "";
+            if (t && t !== "cherry") { document.documentElement.setAttribute("data-theme", t); }
+        })();
+    </script>
+    <title th:text="${title} + ' · Allergen Information System'">Allergen Information System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css">
+    <script th:src="@{/js/suggest.js}" src="/js/suggest.js" defer></script>
+</head>
+
+<body>
+<nav th:fragment="nav" class="topnav">
+    <a class="brand" th:href="@{/}"><span th:text="${uiThemeEmoji} ?: '🌸'">🌸</span> Allergen&nbsp;Info</a>
+    <div class="navlinks">
+        <a th:href="@{/ingredients}">Ingredients</a>
+        <a th:href="@{/recipes}">Recipes</a>
+        <a th:href="@{/tags}">Tags</a>
+        <a th:href="@{/nutrition-reference}">Nutrition&nbsp;ref</a>
+    </div>
+    <div class="navauth">
+        <th:block th:if="${currentUser != null}">
+            <a th:href="@{/account}" th:text="'👤 ' + ${currentUser.displayNameOrUsername()}">👤 me</a>
+            <a th:href="@{/account/favourites}">Favourites</a>
+            <form th:action="@{/logout}" method="post" class="inline">
+                <button type="submit" class="link">Sign&nbsp;out</button>
+            </form>
+        </th:block>
+        <a th:if="${currentUser == null}" th:href="@{/login}" class="btn btn-sm">Sign in</a>
+    </div>
+</nav>
+
+<footer th:fragment="footer" class="footer">
+    <span>Ingredient&nbsp;·&nbsp;Recipe&nbsp;·&nbsp;User catalogues + BFF composition · a portfolio microservices system</span>
+</footer>
+
+<!-- flash messages: pages that redirect with an "error"/"notice" flash attribute drop this in -->
+<div th:fragment="flash">
+    <div class="alert error" th:if="${error}" th:text="${error}"></div>
+    <div class="alert ok" th:if="${notice}" th:text="${notice}"></div>
+</div>
+</body>
+</html>

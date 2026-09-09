@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Favourites')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+
+<main class="container" style="max-width: 760px;">
+    <div class="page-head"><h1>⭐ Favourites</h1></div>
+
+    <nav class="toolbar">
+        <a class="btn btn-sm ghost" th:href="@{/account}">Profile</a>
+        <a class="btn btn-sm ghost" th:href="@{/account/restrictions}">Restrictions</a>
+        <a class="btn btn-sm ghost" th:href="@{/account/favourites}">Favourites</a>
+    </nav>
+
+    <div th:replace="~{fragments/layout :: flash}"></div>
+
+    <div class="card">
+        <h2>Favourite recipes</h2>
+        <p class="muted" th:if="${recipes.isEmpty()}">None yet — favourite a recipe from its page.</p>
+        <table class="table" th:unless="${recipes.isEmpty()}">
+            <thead><tr><th>Recipe</th><th>Tags</th><th></th></tr></thead>
+            <tbody>
+            <tr th:each="r : ${recipes}">
+                <td>
+                    <a th:href="@{/recipes/{id}(id=${r.id})}" th:text="${r.name}">name</a>
+                    <span class="muted" th:text="' · by ' + ${r.creator} + ' v' + ${r.version}"></span>
+                </td>
+                <td><div class="chips"><span class="chip" th:each="t : ${r.tagsOrEmpty()}" th:text="${t}">tag</span></div></td>
+                <td>
+                    <form th:action="@{/favourites/recipes/{id}(id=${r.id})}" method="post">
+                        <input type="hidden" name="action" value="remove">
+                        <input type="hidden" name="back" value="/account/favourites">
+                        <button type="submit" class="btn btn-sm ghost">Remove</button>
+                    </form>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="card">
+        <h2>Favourite substitutions</h2>
+        <p class="muted">Per (recipe, ingredient): your preferred swap. Shown as ⭐ on the recipe page.</p>
+        <table class="table compact" th:unless="${alternatives.isEmpty()}">
+            <thead><tr><th>Recipe</th><th>Ingredient</th><th>Swap for</th><th></th></tr></thead>
+            <tbody>
+            <tr th:each="a : ${alternatives}">
+                <td><a th:href="@{/recipes/{id}(id=${a.recipeId})}" th:text="${a.recipeName}">recipe</a></td>
+                <td><a th:href="@{/ingredients/{id}(id=${a.ingredientId})}" th:text="${a.ingredientName}">ingredient</a></td>
+                <td><a th:href="@{/ingredients/{id}(id=${a.replacementIngredientId})}" th:text="${a.replacementName}">swap</a></td>
+                <td>
+                    <form th:action="@{/favourites/alternatives/remove}" method="post">
+                        <input type="hidden" name="recipeId" th:value="${a.recipeId}">
+                        <input type="hidden" name="ingredientId" th:value="${a.ingredientId}">
+                        <button type="submit" class="btn btn-sm ghost">Remove</button>
+                    </form>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+        <p class="muted" th:if="${alternatives.isEmpty()}">None yet.</p>
+
+        <h3>Add / update one</h3>
+        <p class="muted">Type names — recipe, the ingredient it uses, and what to swap in. Ids work too.</p>
+        <form th:action="@{/favourites/alternatives}" method="post" class="inline-form">
+            <div class="field"><label>Recipe</label>
+                <input type="text" name="recipe" required placeholder="Overnight Oats" data-suggest="/suggest/recipes"></div>
+            <div class="field"><label>Ingredient</label>
+                <input type="text" name="ingredient" required placeholder="maple syrup" data-suggest="/suggest/ingredients"></div>
+            <div class="field"><label>Swap for</label>
+                <input type="text" name="replacement" required placeholder="honey" data-suggest="/suggest/ingredients"></div>
+            <button type="submit" class="btn btn-sm">Save</button>
+        </form>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

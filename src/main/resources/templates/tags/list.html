@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Tags')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+
+<main class="container">
+    <div class="page-head">
+        <h1>🏷️ Tags</h1>
+        <p>Reusable labels shared by ingredients and recipes. Namespaced ones (<code>diet:vegan</code>) group together.</p>
+    </div>
+
+    <div th:replace="~{fragments/layout :: flash}"></div>
+
+    <form th:action="@{/tags}" method="get" class="toolbar">
+        <input type="search" name="prefix" th:value="${prefix}" placeholder="name starts with…"
+               data-suggest="/suggest/tags">
+        <input type="text" name="namespace" th:value="${namespace}" placeholder="namespace" style="max-width:180px;">
+        <button type="submit" class="btn btn-sm">Filter</button>
+        <a class="btn btn-sm ghost" th:href="@{/tags}" th:if="${prefix != null or namespace != null}">Clear</a>
+    </form>
+
+    <div class="card">
+        <h2>Create a tag</h2>
+        <form th:action="@{/tags}" method="post" class="inline-form">
+            <div class="field"><label>Name</label><input type="text" name="name" required placeholder="diet:vegan"></div>
+            <div class="field"><label>Namespace</label><input type="text" name="namespace" placeholder="diet"></div>
+            <div class="field"><label>Description</label><input type="text" name="description"></div>
+            <button type="submit" class="btn btn-sm">Add</button>
+        </form>
+    </div>
+
+    <table class="table" th:unless="${page.contentOrEmpty().isEmpty()}">
+        <thead><tr><th>Name</th><th>Namespace</th><th>Description</th><th></th></tr></thead>
+        <tbody>
+        <tr th:each="t : ${page.content}">
+            <td><span class="chip" th:text="${t.name}">tag</span></td>
+            <td th:text="${t.namespace} ?: '—'">—</td>
+            <td class="muted" th:text="${t.description} ?: '—'">—</td>
+            <td>
+                <form th:action="@{/tags/{id}/delete(id=${t.id})}" method="post"
+                      onsubmit="return confirm('Delete this tag? It is detached from every ingredient/recipe first.');">
+                    <button type="submit" class="btn btn-sm ghost">Delete</button>
+                </form>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    <p class="card muted" th:if="${page.contentOrEmpty().isEmpty()}">No tags match.</p>
+
+    <div class="pagination" th:if="${page.totalPages > 1}">
+        <a class="btn btn-sm ghost" th:if="${page.hasPrevious()}"
+           th:href="@{/tags(prefix=${prefix},namespace=${namespace},page=${pageNo - 1})}">← Prev</a>
+        <span class="muted" th:text="'Page ' + (${pageNo} + 1) + ' of ' + ${page.totalPages}"></span>
+        <a class="btn btn-sm ghost" th:if="${page.hasNext()}"
+           th:href="@{/tags(prefix=${prefix},namespace=${namespace},page=${pageNo + 1})}">Next →</a>
+    </div>
+
+    <div class="card">
+        <h2>Merge tags</h2>
+        <p class="muted">Fold one or more tags into another — every link moves, the sources are deleted.
+            Type tag <em>names</em> (or ids); pick from the suggestions.</p>
+        <form th:action="@{/tags/merge}" method="post" class="inline-form">
+            <div class="field"><label>From (names or ids, comma-separated)</label>
+                <input type="text" name="from" required placeholder="diet:vegan, diet:plant-based"
+                       data-suggest="/suggest/tags"></div>
+            <div class="field"><label>Into (name or id)</label>
+                <input type="text" name="into" required placeholder="diet:vegan"
+                       data-suggest="/suggest/tags"></div>
+            <button type="submit" class="btn btn-sm danger">Merge</button>
+        </form>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

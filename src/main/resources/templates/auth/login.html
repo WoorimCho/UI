@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Sign in')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+
+<main class="container" style="max-width: 460px;">
+    <div class="page-head"><h1>Sign in</h1></div>
+
+    <div class="alert error" th:if="${error}" th:text="${error}"></div>
+
+    <div class="card">
+        <form th:action="@{/login}" method="post" class="stack">
+            <input type="hidden" name="next" th:value="${next}">
+            <div class="field">
+                <label for="identifier">Username or email</label>
+                <input type="text" id="identifier" name="identifier" required autofocus>
+            </div>
+            <div class="field">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <button type="submit" class="btn">Sign in</button>
+        </form>
+    </div>
+    <p class="muted">No account? <a th:href="@{/register}">Create one</a>.</p>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

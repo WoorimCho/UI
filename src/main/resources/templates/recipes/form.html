@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+
+<main class="container" style="max-width: 820px;">
+    <div class="page-head">
+        <h1 th:text="${mode == 'edit' ? '✏️ Edit recipe' : '➕ New recipe'}">New recipe</h1>
+        <p class="muted">Ingredient references are catalogue <em>ids</em> — find them on the
+            <a th:href="@{/ingredients}">ingredients</a> page.</p>
+    </div>
+
+    <form th:action="${mode == 'edit'} ? @{/recipes/{id}(id=${recipe.id})} : @{/recipes}" method="post">
+        <div class="card stack">
+            <div class="row2">
+                <div class="field"><label>Name</label>
+                    <input type="text" name="name" required th:value="${recipe != null ? recipe.name : ''}"></div>
+                <div class="field"><label>Creator <span class="muted">(optional)</span></label>
+                    <input type="text" name="creator" th:value="${recipe != null ? recipe.creator : ''}"
+                           placeholder="anonymous"></div>
+            </div>
+            <div class="field" th:if="${mode == 'edit'}" style="max-width:160px;">
+                <label>Version</label>
+                <input type="number" name="version" th:value="${recipe.version}">
+            </div>
+            <div class="field"><label>Tags <span class="muted">(comma-separated)</span></label>
+                <input type="text" name="tags"
+                       th:value="${recipe != null ? #strings.listJoin(recipe.tagsOrEmpty().![name], ', ') : ''}"
+                       placeholder="cuisine:thai, difficulty:easy, category:snack"></div>
+        </div>
+
+        <div class="card">
+            <h2>Steps</h2>
+            <div id="steps">
+                <div class="line step-row" th:each="s : ${recipe != null ? recipe.stepsOrEmpty() : {}}">
+                    <div class="field"><label>Step</label><textarea name="stepText" th:text="${s.text}"></textarea></div>
+                    <div class="field"><label>Tools <span class="muted">(comma-separated)</span></label>
+                        <input type="text" name="stepTools" th:value="${#strings.listJoin(s.toolsOrEmpty(), ', ')}"></div>
+                    <button type="button" class="btn btn-sm ghost" onclick="this.closest('.step-row').remove()">Remove</button>
+                </div>
+            </div>
+            <button type="button" class="btn btn-sm" onclick="addStep()">+ step</button>
+        </div>
+
+        <div class="card">
+            <h2>Ingredients</h2>
+            <div id="lines">
+                <div class="line ing-row" th:each="l : ${recipe != null ? recipe.ingredientsOrEmpty() : {}}">
+                    <div class="row3">
+                        <div class="field"><label>Ingredient id</label>
+                            <input type="number" name="lineIngredientId" th:value="${l.ingredientId}" required></div>
+                        <div class="field"><label>Amount</label>
+                            <input type="number" step="any" name="lineAmount" th:value="${l.amount}"></div>
+                        <div class="field"><label>Unit</label>
+                            <select name="lineUnit" th:with="u=${l.unit}">
+                                <option value="" th:selected="${u == null}">—</option>
+                                <option th:each="opt : ${ {'g','kg','mg','oz','lb','ml','l','tsp','tbsp','cup','fl_oz','piece','clove','slice','pinch'} }"
+                                        th:value="${opt}" th:text="${opt}" th:selected="${opt == u}"></option>
+                            </select></div>
+                    </div>
+                    <div class="row3">
+                        <div class="field"><label>Free-text qty <span class="muted">(display)</span></label>
+                            <input type="text" name="lineQuantity" th:value="${l.quantity}" placeholder="a good pinch"></div>
+                        <div class="field"><label>Optional?</label>
+                            <select name="lineOptional">
+                                <option value="false" th:selected="${!l.optional}">no</option>
+                                <option value="true" th:selected="${l.optional}">yes</option>
+                            </select></div>
+                        <div class="field"><label>Replaceable?</label>
+                            <select name="lineReplaceable">
+                                <option value="false" th:selected="${!l.replaceable}">no</option>
+                                <option value="true" th:selected="${l.replaceable}">yes</option>
+                            </select></div>
+                    </div>
+                    <div class="field"><label>Replacement ids <span class="muted">(comma-separated; required if replaceable)</span></label>
+                        <input type="text" name="lineReplacements"
+                               th:value="${#strings.listJoin(l.replacementsOrEmpty().![ingredientId], ', ')}"></div>
+                    <button type="button" class="btn btn-sm ghost" onclick="this.closest('.ing-row').remove()">Remove</button>
+                </div>
+            </div>
+            <button type="button" class="btn btn-sm" onclick="addLine()">+ ingredient</button>
+        </div>
+
+        <div class="actions">
+            <button type="submit" class="btn" th:text="${mode == 'edit' ? 'Save changes' : 'Create recipe'}">Create recipe</button>
+            <a class="btn ghost" th:href="${recipe != null ? '/recipes/' + recipe.id : '/recipes'}">Cancel</a>
+        </div>
+    </form>
+</main>
+
+<template id="stepTpl">
+    <div class="line step-row">
+        <div class="field"><label>Step</label><textarea name="stepText"></textarea></div>
+        <div class="field"><label>Tools (comma-separated)</label><input type="text" name="stepTools"></div>
+        <button type="button" class="btn btn-sm ghost" onclick="this.closest('.step-row').remove()">Remove</button>
+    </div>
+</template>
+<template id="lineTpl">
+    <div class="line ing-row">
+        <div class="row3">
+            <div class="field"><label>Ingredient id</label><input type="number" name="lineIngredientId" required></div>
+            <div class="field"><label>Amount</label><input type="number" step="any" name="lineAmount"></div>
+            <div class="field"><label>Unit</label>
+                <select name="lineUnit">
+                    <option value="">—</option>
+                    <option>g</option><option>kg</option><option>mg</option><option>oz</option><option>lb</option>
+                    <option>ml</option><option>l</option><option>tsp</option><option>tbsp</option><option>cup</option>
+                    <option>fl_oz</option><option>piece</option><option>clove</option><option>slice</option><option>pinch</option>
+                </select></div>
+        </div>
+        <div class="row3">
+            <div class="field"><label>Free-text qty (display)</label><input type="text" name="lineQuantity"></div>
+            <div class="field"><label>Optional?</label>
+                <select name="lineOptional"><option value="false">no</option><option value="true">yes</option></select></div>
+            <div class="field"><label>Replaceable?</label>
+                <select name="lineReplaceable"><option value="false">no</option><option value="true">yes</option></select></div>
+        </div>
+        <div class="field"><label>Replacement ids (comma-separated)</label><input type="text" name="lineReplacements"></div>
+        <button type="button" class="btn btn-sm ghost" onclick="this.closest('.ing-row').remove()">Remove</button>
+    </div>
+</template>
+
+<script th:inline="none">
+    function addStep() {
+        document.getElementById('steps').appendChild(
+            document.getElementById('stepTpl').content.cloneNode(true));
+    }
+    function addLine() {
+        document.getElementById('lines').appendChild(
+            document.getElementById('lineTpl').content.cloneNode(true));
+    }
+    // start with one empty row each on the "new" form
+    if (!document.querySelector('#steps .step-row')) addStep();
+    if (!document.querySelector('#lines .ing-row')) addLine();
+</script>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

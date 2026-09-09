@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Recipes')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+
+<main class="container">
+    <div class="page-head">
+        <h1>📝 Recipes</h1>
+        <p>Ordered steps with tools, structured quantities, optional / replaceable ingredients, and name variations.</p>
+    </div>
+
+    <form th:action="@{/recipes}" method="get" class="toolbar">
+        <input type="search" name="name" th:value="${name}" placeholder="name contains…">
+        <input type="text" name="tag" th:value="${tag}" placeholder="tag(s), comma-separated" style="max-width:220px;">
+        <select name="match">
+            <option value="all" th:selected="${match == 'all'}">all</option>
+            <option value="any" th:selected="${match == 'any'}">any</option>
+        </select>
+        <input type="text" name="ingredientId" th:value="${ingredientId}" placeholder="ingredient id(s)" style="max-width:150px;">
+        <button type="submit" class="btn btn-sm">Search</button>
+        <a class="btn btn-sm ghost" th:href="@{/recipes}"
+           th:if="${name != null or tag != null or ingredientId != null}">Clear</a>
+        <span class="spacer"></span>
+        <a class="btn btn-sm mint" th:href="@{/recipes/random(name=${name},tag=${tag},match=${match})}">🎲 Surprise me</a>
+        <a class="btn btn-sm ghost" th:href="@{/import}">⬆️ Import CSV</a>
+        <a class="btn btn-sm" th:href="@{/recipes/new}">➕ New recipe</a>
+    </form>
+
+    <div class="grid" th:unless="${page.contentOrEmpty().isEmpty()}">
+        <a class="tile" th:each="r : ${page.content}" th:href="@{/recipes/{id}(id=${r.id})}">
+            <div class="label" style="font-size:18px;" th:text="${r.name}">name</div>
+            <p class="muted" th:text="'by ' + ${r.creator} + ' · v' + ${r.version} + ' · ' + ${r.ingredientsOrEmpty().size()} + ' ingredients · ' + ${r.stepsOrEmpty().size()} + ' steps'">meta</p>
+            <div class="chips" style="margin-top:8px;">
+                <span class="chip" th:each="t : ${r.tagsOrEmpty()}" th:text="${t.name}">tag</span>
+            </div>
+        </a>
+    </div>
+    <p class="card muted" th:if="${page.contentOrEmpty().isEmpty()}">No recipes match.</p>
+
+    <div class="pagination" th:if="${page.totalPages > 1}">
+        <a class="btn btn-sm ghost" th:if="${page.hasPrevious()}"
+           th:href="@{/recipes(name=${name},tag=${tag},match=${match},ingredientId=${ingredientId},page=${pageNo - 1})}">← Prev</a>
+        <span class="muted" th:text="'Page ' + (${pageNo} + 1) + ' of ' + ${page.totalPages}"></span>
+        <a class="btn btn-sm ghost" th:if="${page.hasNext()}"
+           th:href="@{/recipes(name=${name},tag=${tag},match=${match},ingredientId=${ingredientId},page=${pageNo + 1})}">Next →</a>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

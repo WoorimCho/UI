@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+
+<main class="container" style="max-width: 560px;">
+    <div class="page-head">
+        <h1 th:text="${mode == 'edit' ? '✏️ Edit ingredient' : '➕ New ingredient'}">New ingredient</h1>
+    </div>
+
+    <div class="card">
+        <form th:action="${mode == 'edit'} ? @{/ingredients/{id}(id=${ingredient.id})} : @{/ingredients}"
+              method="post" class="stack">
+            <div class="field">
+                <label for="name">Name</label>
+                <input type="text" id="name" name="name" required
+                       th:value="${ingredient != null ? ingredient.name : ''}" placeholder="e.g. rolled oats">
+            </div>
+            <div class="field">
+                <label for="tags">Tags <span class="muted">(comma-separated, created if new)</span></label>
+                <input type="text" id="tags" name="tags"
+                       th:value="${ingredient != null ? #strings.listJoin(ingredient.tagsOrEmpty().![name], ', ') : ''}"
+                       placeholder="diet:vegan, form:raw, allergen:gluten">
+                <div class="hint">Namespaced tags like <code>diet:vegan</code> group in the tag browser.</div>
+            </div>
+            <div class="actions">
+                <button type="submit" class="btn" th:text="${mode == 'edit' ? 'Save changes' : 'Create'}">Create</button>
+                <a class="btn ghost" th:href="${ingredient != null ? '/ingredients/' + ingredient.id : '/ingredients'}">Cancel</a>
+            </div>
+        </form>
+    </div>
+    <p class="muted" th:if="${mode == 'new'}">Nutrition facts are set from the ingredient's page after it's created.</p>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

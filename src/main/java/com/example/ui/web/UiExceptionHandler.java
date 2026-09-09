@@ -1,0 +1,68 @@
+package com.example.ui.web;
+
+import org.springframework.http.HttpStatusCode;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.client.RestClientResponseException;
+import org.springframework.web.client.ResourceAccessException;
+
+/**
+ * Renders a friendly page when a downstream call fails, instead of a stack
+ * trace. Pulls the RFC 9457 {@code detail} out of the problem body when there
+ * is one.
+ */
+@ControllerAdvice
+public class UiExceptionHandler {
+
+    @ExceptionHandler(RestClientResponseException.class)
+    public String downstreamError(RestClientResponseException ex, Model model) {
+        HttpStatusCode status = ex.getStatusCode();
+        model.addAttribute("status", status.value());
+        model.addAttribute("heading", switch (status.value()) {
+            case 400 -> "That didn't go through";
+            case 401 -> "Please sign in";
+            case 403 -> "Not allowed";
+            case 404 -> "Not found";
+            case 409 -> "Conflict";
+            case 502, 503 -> "A service is unavailable";
+            default -> "Something went wrong";
+        });
+        model.addAttribute("detail", extractDetail(ex));
+        return "error";
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public String badInput(IllegalArgumentException ex, Model model) {
+        model.addAttribute("status", 400);
+        model.addAttribute("heading", "That didn't go through");
+        model.addAttribute("detail", ex.getMessage());
+        return "error";
+    }
+
+    @ExceptionHandler(ResourceAccessException.class)
+    public String downstreamUnreachable(ResourceAccessException ex, Model model) {
+        model.addAttribute("status", 503);
+        model.addAttribute("heading", "A service is unreachable");
+        model.addAttribute("detail", "Could not reach one of the catalogue services. Is the stack running?");
+        return "error";
+    }
+
+    private static String extractDetail(RestClientResponseException ex) {
+        try {
+            String body = ex.getResponseBodyAsString();
+            if (body != null && body.contains("\"detail\"")) {
+                int i = body.indexOf("\"detail\"");
+                int colon = body.indexOf(':', i);
+                int start = body.indexOf('"', colon + 1);
+                int end = body.indexOf('"', start + 1);
+                if (start > 0 && end > start) {
+                    return body.substring(start + 1, end);
+                }
+            }
+        } catch (RuntimeException ignored) {
+            // fall through
+        }
+        return ex.getStatusText();
+    }
+}

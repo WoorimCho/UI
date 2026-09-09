@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Ingredients')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+
+<main class="container">
+    <div class="page-head">
+        <h1>🥬 Ingredients</h1>
+        <p>One entry covers what was once split into “food” and “ingredient”. Sub-distinctions are tags.</p>
+    </div>
+
+    <div th:replace="~{fragments/layout :: flash}"></div>
+
+    <form th:action="@{/ingredients}" method="get" class="toolbar">
+        <input type="search" name="name" th:value="${name}" placeholder="name contains…"
+               style="max-width:220px;" data-suggest="/suggest/ingredients">
+        <div class="field" style="margin:0;">
+            <input type="search" name="tag" th:value="${tag}" placeholder="filter by tag(s), comma-separated — e.g. diet:vegan, nut-free"
+                   data-suggest="/suggest/tags">
+        </div>
+        <select name="match">
+            <option value="all" th:selected="${match == 'all'}">match all</option>
+            <option value="any" th:selected="${match == 'any'}">match any</option>
+        </select>
+        <button type="submit" class="btn btn-sm">Filter</button>
+        <a class="btn btn-sm ghost" th:href="@{/ingredients}" th:if="${name != null or tag != null}">Clear</a>
+        <span class="spacer"></span>
+        <a class="btn btn-sm ghost" th:href="@{/import}">⬆️ Import CSV</a>
+        <a class="btn btn-sm" th:href="@{/ingredients/new}">➕ New ingredient</a>
+    </form>
+
+    <div class="card" th:if="${page.contentOrEmpty().isEmpty()}">
+        <p class="muted">No ingredients match.</p>
+    </div>
+
+    <table class="table" th:unless="${page.contentOrEmpty().isEmpty()}">
+        <thead>
+        <tr><th>Name</th><th>Tags</th><th>Nutrition</th><th></th></tr>
+        </thead>
+        <tbody>
+        <tr th:each="i : ${page.content}">
+            <td><a th:href="@{/ingredients/{id}(id=${i.id})}" th:text="${i.name}">name</a></td>
+            <td>
+                <div class="chips">
+                    <span class="chip" th:each="t : ${i.tagsOrEmpty()}" th:text="${t.name}">tag</span>
+                    <span class="muted" th:if="${i.tagsOrEmpty().isEmpty()}">—</span>
+                </div>
+            </td>
+            <td>
+                <span class="badge ok" th:if="${i.hasNutrition()}"
+                      th:text="${i.nutrition.kcal != null ? #numbers.formatDecimal(i.nutrition.kcal,1,0) + ' kcal/100g' : 'yes'}">yes</span>
+                <span class="badge muted" th:unless="${i.hasNutrition()}">none</span>
+            </td>
+            <td style="white-space:nowrap;">
+                <a class="btn btn-sm ghost" th:href="@{/ingredients/{id}/edit(id=${i.id})}">Edit</a>
+                <form th:action="@{/ingredients/{id}/delete(id=${i.id})}" method="post" style="display:inline;"
+                      onsubmit="return confirm('Delete ' + this.dataset.name + '?');" th:data-name="${i.name}">
+                    <button type="submit" class="btn btn-sm ghost">Delete</button>
+                </form>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+    <div class="pagination" th:if="${page.totalPages > 1}">
+        <a class="btn btn-sm ghost" th:if="${page.hasPrevious()}"
+           th:href="@{/ingredients(name=${name},tag=${tag},match=${match},page=${pageNo - 1})}">← Prev</a>
+        <span class="muted" th:text="'Page ' + (${pageNo} + 1) + ' of ' + ${page.totalPages}">Page 1</span>
+        <a class="btn btn-sm ghost" th:if="${page.hasNext()}"
+           th:href="@{/ingredients(name=${name},tag=${tag},match=${match},page=${pageNo + 1})}">Next →</a>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

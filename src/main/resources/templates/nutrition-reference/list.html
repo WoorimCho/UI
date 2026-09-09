@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Nutrition reference')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+
+<main class="container">
+    <div class="page-head">
+        <h1>📊 Nutrition reference</h1>
+        <p>Approximate figures for common foods, per 100&nbsp;g. Use these to fill an ingredient's nutrition.</p>
+    </div>
+
+    <div th:replace="~{fragments/layout :: flash}"></div>
+
+    <form th:action="@{/nutrition-reference}" method="get" class="toolbar">
+        <input type="search" name="name" th:value="${name}" placeholder="search a food…">
+        <button type="submit" class="btn btn-sm">Search</button>
+        <a class="btn btn-sm ghost" th:href="@{/nutrition-reference}" th:if="${name}">Clear</a>
+    </form>
+
+    <table class="table compact">
+        <thead>
+        <tr>
+            <th>Food</th><th class="num">kcal</th><th class="num">Protein</th><th class="num">Carbs</th>
+            <th class="num">Fat</th><th class="num">Fiber</th><th class="num">Sugar</th><th class="num">Sodium</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="r : ${rows}">
+            <td th:text="${r.name}">food</td>
+            <td class="num" th:text="${r.kcal != null ? #numbers.formatDecimal(r.kcal,1,0) : '—'}">0</td>
+            <td class="num" th:text="${r.proteinG != null ? #numbers.formatDecimal(r.proteinG,1,1) : '—'}">0</td>
+            <td class="num" th:text="${r.carbsG != null ? #numbers.formatDecimal(r.carbsG,1,1) : '—'}">0</td>
+            <td class="num" th:text="${r.fatG != null ? #numbers.formatDecimal(r.fatG,1,1) : '—'}">0</td>
+            <td class="num" th:text="${r.fiberG != null ? #numbers.formatDecimal(r.fiberG,1,1) : '—'}">0</td>
+            <td class="num" th:text="${r.sugarG != null ? #numbers.formatDecimal(r.sugarG,1,1) : '—'}">0</td>
+            <td class="num" th:text="${r.sodiumMg != null ? #numbers.formatDecimal(r.sodiumMg,1,0) : '—'}">0</td>
+        </tr>
+        <tr th:if="${rows.isEmpty()}"><td colspan="8" class="muted">Nothing matches.</td></tr>
+        </tbody>
+    </table>
+
+    <div class="card">
+        <h2>Add a food</h2>
+        <p class="muted">Figures per 100&nbsp;g (or set a different basis). Name must be new; leave any figure blank.</p>
+        <form th:action="@{/nutrition-reference}" method="post">
+            <div class="field"><label>Food name</label>
+                <input type="text" name="name" required placeholder="quinoa, cooked"></div>
+            <div class="row3">
+                <div class="field"><label>Basis (g)</label><input type="number" step="any" name="basisGrams" value="100"></div>
+                <div class="field"><label>Calories</label><input type="number" step="any" name="kcal"></div>
+                <div class="field"><label>Protein (g)</label><input type="number" step="any" name="proteinG"></div>
+                <div class="field"><label>Carbs (g)</label><input type="number" step="any" name="carbsG"></div>
+                <div class="field"><label>Fat (g)</label><input type="number" step="any" name="fatG"></div>
+                <div class="field"><label>Fiber (g)</label><input type="number" step="any" name="fiberG"></div>
+                <div class="field"><label>Sugar (g)</label><input type="number" step="any" name="sugarG"></div>
+                <div class="field"><label>Sodium (mg)</label><input type="number" step="any" name="sodiumMg"></div>
+            </div>
+            <button type="submit" class="btn">Add to reference</button>
+        </form>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

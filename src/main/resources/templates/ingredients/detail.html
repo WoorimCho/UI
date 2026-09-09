@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${ingredient.name})}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+
+<main class="container" style="max-width: 780px;">
+    <div class="page-head">
+        <h1 th:text="'🥬 ' + ${ingredient.name}">name</h1>
+        <p class="muted">Ingredient #<span th:text="${ingredient.id}">1</span></p>
+    </div>
+
+    <div th:replace="~{fragments/layout :: flash}"></div>
+
+    <div class="card">
+        <h2>Tags</h2>
+        <div class="chips">
+            <span class="chip" th:each="t : ${ingredient.tagsOrEmpty()}" th:text="${t.name}">tag</span>
+            <span class="muted" th:if="${ingredient.tagsOrEmpty().isEmpty()}">No tags yet.</span>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Nutrition facts</h2>
+        <p class="muted" th:if="${!ingredient.hasNutrition()}">No nutrition data. Add some below.</p>
+        <table class="table compact" th:if="${ingredient.hasNutrition()}">
+            <tbody th:with="n=${ingredient.nutrition}">
+            <tr><th>Per</th><td class="num" th:text="${n.basisGrams != null ? #numbers.formatDecimal(n.basisGrams,1,0) + ' g' : '100 g'}">100 g</td></tr>
+            <tr><th>Calories</th><td class="num" th:text="${n.kcal != null ? #numbers.formatDecimal(n.kcal,1,0) + ' kcal' : '—'}">—</td></tr>
+            <tr><th>Protein</th><td class="num" th:text="${n.proteinG != null ? #numbers.formatDecimal(n.proteinG,1,1) + ' g' : '—'}">—</td></tr>
+            <tr><th>Carbs</th><td class="num" th:text="${n.carbsG != null ? #numbers.formatDecimal(n.carbsG,1,1) + ' g' : '—'}">—</td></tr>
+            <tr><th>Fat</th><td class="num" th:text="${n.fatG != null ? #numbers.formatDecimal(n.fatG,1,1) + ' g' : '—'}">—</td></tr>
+            <tr><th>Fiber</th><td class="num" th:text="${n.fiberG != null ? #numbers.formatDecimal(n.fiberG,1,1) + ' g' : '—'}">—</td></tr>
+            <tr><th>Sugar</th><td class="num" th:text="${n.sugarG != null ? #numbers.formatDecimal(n.sugarG,1,1) + ' g' : '—'}">—</td></tr>
+            <tr><th>Sodium</th><td class="num" th:text="${n.sodiumMg != null ? #numbers.formatDecimal(n.sodiumMg,1,1) + ' mg' : '—'}">—</td></tr>
+            </tbody>
+        </table>
+
+        <h3>Set / update</h3>
+        <form th:action="@{/ingredients/{id}/nutrition(id=${ingredient.id})}" method="post"
+              th:with="n=${ingredient.nutrition}">
+            <div class="row3">
+                <div class="field"><label>Basis (g)</label>
+                    <input type="number" step="any" name="basisGrams" th:value="${n != null ? n.basisGrams : 100}"></div>
+                <div class="field"><label>Calories</label>
+                    <input type="number" step="any" name="kcal" th:value="${n != null ? n.kcal : null}"></div>
+                <div class="field"><label>Protein (g)</label>
+                    <input type="number" step="any" name="proteinG" th:value="${n != null ? n.proteinG : null}"></div>
+                <div class="field"><label>Carbs (g)</label>
+                    <input type="number" step="any" name="carbsG" th:value="${n != null ? n.carbsG : null}"></div>
+                <div class="field"><label>Fat (g)</label>
+                    <input type="number" step="any" name="fatG" th:value="${n != null ? n.fatG : null}"></div>
+                <div class="field"><label>Fiber (g)</label>
+                    <input type="number" step="any" name="fiberG" th:value="${n != null ? n.fiberG : null}"></div>
+                <div class="field"><label>Sugar (g)</label>
+                    <input type="number" step="any" name="sugarG" th:value="${n != null ? n.sugarG : null}"></div>
+                <div class="field"><label>Sodium (mg)</label>
+                    <input type="number" step="any" name="sodiumMg" th:value="${n != null ? n.sodiumMg : null}"></div>
+            </div>
+            <div class="actions">
+                <button type="submit" class="btn">Save nutrition</button>
+                <a class="btn ghost" th:href="@{/nutrition-reference(name=${ingredient.name})}">Look up in reference →</a>
+            </div>
+            <p class="hint">Leave a field blank to clear it. An empty form clears all nutrition.</p>
+        </form>
+    </div>
+
+    <div class="actions">
+        <a class="btn" th:href="@{/ingredients/{id}/edit(id=${ingredient.id})}">✏️ Edit name &amp; tags</a>
+        <a class="btn ghost" th:href="@{/recipes(ingredientId=${ingredient.id})}">Recipes using this</a>
+        <form th:action="@{/ingredients/{id}/delete(id=${ingredient.id})}" method="post"
+              onsubmit="return confirm('Delete this ingredient?');">
+            <button type="submit" class="btn danger">🗑️ Delete</button>
+        </form>
+        <a class="btn ghost" th:href="@{/ingredients}">Back to list</a>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

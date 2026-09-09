@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Home')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+
+<main class="container">
+    <div class="page-head">
+        <h1>🌸 Allergen Information System</h1>
+        <p>Browse ingredients and recipes, track dietary restrictions, and run the recipe calculators.</p>
+    </div>
+
+    <div class="stats" th:unless="${countsUnavailable}">
+        <div class="stat"><div class="n" th:text="${ingredientCount}">0</div><div class="k">Ingredients</div></div>
+        <div class="stat"><div class="n" th:text="${recipeCount}">0</div><div class="k">Recipes</div></div>
+    </div>
+    <div class="alert warn" th:if="${countsUnavailable}">
+        The catalogue services aren't responding — start the stack (<code>docker compose up</code>) and refresh.
+    </div>
+
+    <div class="grid">
+        <a class="tile" th:href="@{/ingredients}">
+            <div class="big">🥬</div><div class="label">Ingredients</div>
+            <p class="muted">Search by tag, view nutrition facts, add &amp; edit.</p>
+        </a>
+        <a class="tile" th:href="@{/recipes}">
+            <div class="big">📝</div><div class="label">Recipes</div>
+            <p class="muted">Steps &amp; tools, structured quantities, substitutes, variations.</p>
+        </a>
+        <a class="tile" th:href="@{/recipes/random}">
+            <div class="big">🎲</div><div class="label">Surprise me</div>
+            <p class="muted">Jump to a random recipe.</p>
+        </a>
+        <a class="tile" th:href="@{/tags}">
+            <div class="big">🏷️</div><div class="label">Tags</div>
+            <p class="muted">Shared labels — create, merge, browse by namespace.</p>
+        </a>
+        <a class="tile" th:href="@{/nutrition-reference}">
+            <div class="big">📊</div><div class="label">Nutrition reference</div>
+            <p class="muted">44 common foods, per 100 g.</p>
+        </a>
+        <a class="tile" th:href="@{/import}">
+            <div class="big">⬆️</div><div class="label">Import CSV</div>
+            <p class="muted">Bulk-load ingredients or recipes from a spreadsheet.</p>
+        </a>
+        <a class="tile" th:href="@{/account}" th:if="${currentUser != null}">
+            <div class="big">👤</div><div class="label">Your account</div>
+            <p class="muted">Restrictions, favourite recipes &amp; substitutions.</p>
+        </a>
+        <a class="tile" th:href="@{/login}" th:if="${currentUser == null}">
+            <div class="big">🔑</div><div class="label">Sign in</div>
+            <p class="muted">For restrictions, favourites, and the calculators.</p>
+        </a>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Portions')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+
+<main class="container" style="max-width: 780px;">
+    <div class="page-head">
+        <h1>⚖️ Portions</h1>
+        <p class="muted">Scale every numeric line amount. Give a multiplier, or "I want this much of one line".</p>
+    </div>
+
+    <div class="card">
+        <form th:action="@{/recipes/{id}/portions(id=${recipeId})}" method="get" class="stack">
+            <div class="field" style="max-width:200px;">
+                <label>Multiplier</label>
+                <input type="number" step="any" name="scale" th:value="${scale}" placeholder="e.g. 2.5">
+            </div>
+            <p class="muted">— or —</p>
+            <div class="row3">
+                <div class="field"><label>Anchor ingredient id</label><input type="number" name="anchorIngredientId"></div>
+                <div class="field"><label>I want this amount</label><input type="number" step="any" name="anchorAmount"></div>
+                <div class="field"><label>in this unit</label>
+                    <select name="anchorUnit">
+                        <option value="">—</option>
+                        <option>g</option><option>kg</option><option>mg</option><option>oz</option><option>lb</option>
+                        <option>ml</option><option>l</option><option>tsp</option><option>tbsp</option><option>cup</option>
+                        <option>fl_oz</option><option>piece</option><option>clove</option><option>slice</option><option>pinch</option>
+                    </select></div>
+            </div>
+            <div class="actions">
+                <button type="submit" class="btn">Scale</button>
+                <a class="btn ghost" th:href="@{/recipes/{id}(id=${recipeId})}">← recipe</a>
+            </div>
+        </form>
+    </div>
+
+    <div class="card" th:if="${result != null}">
+        <h2 th:text="'Scaled ×' + ${#numbers.formatDecimal(result.scale,1,2)} + ' — ' + ${result.recipeName}">Scaled</h2>
+        <table class="table compact">
+            <thead><tr><th>Ingredient</th><th class="num">Original</th><th class="num">Scaled</th></tr></thead>
+            <tbody>
+            <tr th:each="l : ${result.linesOrEmpty()}">
+                <td th:text="${l.name}">name</td>
+                <td class="num" th:text="${l.originalAmount != null ? #numbers.formatDecimal(l.originalAmount,1,1) + ' ' + l.unit : (l.quantityText ?: '—')}">—</td>
+                <td class="num">
+                    <strong th:if="${l.scaled}" th:text="${#numbers.formatDecimal(l.scaledAmount,1,1)} + ' ' + ${l.unit}">x</strong>
+                    <span class="muted" th:unless="${l.scaled}" th:text="${l.quantityText ?: '(free text — not scaled)'}">—</span>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

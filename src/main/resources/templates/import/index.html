@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Import CSV')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+
+<main class="container" style="max-width: 780px;">
+    <div class="page-head">
+        <h1>⬆️ Bulk import</h1>
+        <p class="muted">Upload a CSV. Every call returns 200 — bad rows are reported, not fatal.</p>
+    </div>
+
+    <div th:each="res,frame : ${ {ingredientResult, recipeResult} }">
+        <div class="alert ok" th:if="${res != null}"
+             th:text="'Imported ' + ${res.imported} + ' of ' + ${res.rows} + ' rows (' + ${res.skipped} + ' skipped).'">done</div>
+        <div class="card" th:if="${res != null and !res.errorsOrEmpty().isEmpty()}">
+            <h3>Row problems</h3>
+            <table class="table compact">
+                <thead><tr><th class="num">Line</th><th>Message</th></tr></thead>
+                <tbody><tr th:each="e : ${res.errors}"><td class="num" th:text="${e.line}">0</td><td th:text="${e.message}">msg</td></tr></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>🥬 Ingredients</h2>
+        <form th:action="@{/import/ingredients}" method="post" enctype="multipart/form-data" class="inline-form">
+            <input type="file" name="file" accept=".csv,text/csv" required>
+            <button type="submit" class="btn btn-sm">Import ingredients</button>
+        </form>
+        <p class="hint">Header row required. Columns (case-insensitive, any order):
+            <code>name</code> (required), <code>tags</code> (<code>;</code>-separated), and any of
+            <code>basisGrams, kcal, proteinG, carbsG, fatG, fiberG, sugarG, sodiumMg</code>.</p>
+        <pre class="hint" style="white-space:pre-wrap;">name,tags,kcal,proteinG
+rolled oats,form:raw;diet:vegan,379,13.2
+maple syrup,diet:vegan,260,0</pre>
+    </div>
+
+    <div class="card">
+        <h2>📝 Recipes</h2>
+        <form th:action="@{/import/recipes}" method="post" enctype="multipart/form-data" class="inline-form">
+            <input type="file" name="file" accept=".csv,text/csv" required>
+            <button type="submit" class="btn btn-sm">Import recipes</button>
+        </form>
+        <p class="hint">One row per recipe skeleton (add steps afterwards with edit). Columns:
+            <code>name</code> (required), <code>creator</code>, <code>tags</code> (<code>;</code>-separated),
+            <code>ingredients</code> (<code>;</code>-separated tokens, each
+            <code>&lt;id&gt;</code> or <code>&lt;id&gt;:&lt;amount&gt;:&lt;unit&gt;</code> or
+            <code>&lt;id&gt;:&lt;amount&gt;:&lt;unit&gt;:opt</code>).</p>
+        <pre class="hint" style="white-space:pre-wrap;">name,creator,tags,ingredients
+Quick Oatmeal,woorim,category:breakfast,1:80:g;2:250:ml;3:15:g:opt</pre>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

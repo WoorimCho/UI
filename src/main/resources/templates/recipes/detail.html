@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${recipe.name})}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+
+<main class="container" style="max-width: 820px;">
+    <div class="page-head">
+        <h1 th:text="'📝 ' + ${recipe.name}">name</h1>
+        <p class="muted">
+            by <span th:text="${recipe.creator}">anon</span> · version <span th:text="${recipe.version}">1</span>
+            · recipe #<span th:text="${recipe.id}">1</span>
+        </p>
+    </div>
+
+    <!-- personalised banner -->
+    <th:block th:if="${recipe.personalised}">
+        <div class="alert ok" th:if="${!recipe.hasConflicts()}">✅ No conflicts with your dietary restrictions.</div>
+        <div class="alert error" th:if="${recipe.hasConflicts()}">
+            ⚠️ Conflicts with your restrictions:
+            <ul style="margin:6px 0 0 18px;">
+                <li th:each="c : ${recipe.conflicts}">
+                    <strong th:text="${c.restriction}">restriction</strong> —
+                    <span th:text="${#strings.listJoin(c.ingredientNames, ', ')}">names</span>
+                </li>
+            </ul>
+        </div>
+    </th:block>
+    <div class="alert warn" th:unless="${recipe.personalised}">
+        <a th:href="@{/login(next=${'/recipes/' + recipe.id})}">Sign in</a> to check this against your restrictions and run the calculators.
+    </div>
+
+    <div class="card">
+        <h2>Tags</h2>
+        <div class="chips">
+            <span class="chip" th:each="t : ${recipe.tags}" th:text="${t}">own</span>
+            <span class="chip inherited" th:each="t : ${recipe.inheritedTags}" th:text="${t}" title="inherited from an ingredient">inherited</span>
+            <span class="muted" th:if="${recipe.tags.isEmpty() and recipe.inheritedTags.isEmpty()}">No tags.</span>
+        </div>
+        <p class="hint">Solid = the recipe's own · green = inherited from its ingredients.</p>
+    </div>
+
+    <div class="card">
+        <h2>Ingredients</h2>
+        <div class="line" th:each="l : ${recipe.lines}"
+             th:classappend="${l.conflicting(recipe.conflicts)} ? ' conflict' : ''">
+            <div>
+                <a class="name" th:if="${l.resolved}" th:href="@{/ingredients/{id}(id=${l.ingredientId})}" th:text="${l.name}">name</a>
+                <span class="name" th:unless="${l.resolved}" th:text="${l.name}">name</span>
+                <span th:if="${!l.amountDisplay().isEmpty()}" class="muted" th:text="' — ' + ${l.amountDisplay()}"> — 200 g</span>
+                <span class="badge warn" th:if="${l.optional}">optional</span>
+                <span class="badge" th:if="${l.replaceable}">replaceable</span>
+            </div>
+            <div class="chips" style="margin-top:4px;" th:if="${!l.tags.isEmpty()}">
+                <span class="chip" th:each="t : ${l.tags}" th:text="${t}">tag</span>
+            </div>
+            <div class="subs" th:if="${!l.replacements.isEmpty()}">
+                ↳ swap for:
+                <th:block th:each="s, it : ${l.replacements}">
+                    <span th:text="${s.name}">sub</span><span th:if="${s.recipeId != null}"> (makeable)</span><th:block th:if="${!it.last}">, </th:block>
+                </th:block>
+            </div>
+            <div class="subs" th:if="${l.preferredReplacementName != null}">
+                ⭐ your preferred swap: <strong th:text="${l.preferredReplacementName}">x</strong>
+            </div>
+        </div>
+        <p class="muted" th:if="${recipe.lines.isEmpty()}">No ingredients listed.</p>
+    </div>
+
+    <div class="card">
+        <h2>Steps</h2>
+        <ol class="steps">
+            <li th:each="s : ${recipe.steps}">
+                <div th:text="${s.text}">step text</div>
+                <div class="chips" style="margin-top:6px;" th:if="${!s.tools.isEmpty()}">
+                    <span class="chip tool" th:each="tool : ${s.tools}" th:text="${tool}">tool</span>
+                </div>
+            </li>
+        </ol>
+        <p class="muted" th:if="${recipe.steps.isEmpty()}">No steps listed.</p>
+    </div>
+
+    <div class="card" th:if="${recipe.personalised}">
+        <h2>Calculators</h2>
+        <div class="actions">
+            <a class="btn" th:href="@{/recipes/{id}/nutrition(id=${recipe.id})}">🍎 Nutrition</a>
+            <a class="btn" th:href="@{/recipes/{id}/calories(id=${recipe.id})}">🔥 Calories</a>
+            <a class="btn" th:href="@{/recipes/{id}/portions(id=${recipe.id})}">⚖️ Portions</a>
+        </div>
+    </div>
+
+    <div class="actions">
+        <a class="btn" th:href="@{/recipes/{id}/edit(id=${recipe.id})}">✏️ Edit</a>
+        <form th:if="${currentUser != null}" th:action="@{/favourites/recipes/{id}(id=${recipe.id})}" method="post">
+            <input type="hidden" name="back" th:value="${'/recipes/' + recipe.id}">
+            <input type="hidden" name="action" th:value="${favourited} ? 'remove' : 'add'">
+            <button type="submit" class="btn mint" th:if="${!favourited}">⭐ Favourite</button>
+            <button type="submit" class="btn ghost" th:if="${favourited}">★ Unfavourite</button>
+        </form>
+        <form th:action="@{/recipes/{id}/delete(id=${recipe.id})}" method="post"
+              onsubmit="return confirm('Delete this recipe?');">
+            <button type="submit" class="btn danger">🗑️ Delete</button>
+        </form>
+        <a class="btn ghost" th:href="@{/recipes}">Back to recipes</a>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

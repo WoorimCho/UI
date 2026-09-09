@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Dietary restrictions')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+
+<main class="container" style="max-width: 720px;">
+    <div class="page-head">
+        <h1>🚫 Dietary restrictions</h1>
+        <p class="muted">Recipes get checked against these — conflicts show on the recipe page.</p>
+    </div>
+
+    <nav class="toolbar">
+        <a class="btn btn-sm ghost" th:href="@{/account}">Profile</a>
+        <a class="btn btn-sm ghost" th:href="@{/account/restrictions}">Restrictions</a>
+        <a class="btn btn-sm ghost" th:href="@{/account/favourites}">Favourites</a>
+    </nav>
+
+    <form th:action="@{/account/restrictions}" method="post">
+        <div class="card" th:each="entry : ${byKind}">
+            <h2 th:text="${#strings.capitalize(entry.key)}">kind</h2>
+            <div class="checks">
+                <label class="check" th:each="r : ${entry.value}">
+                    <input type="checkbox" name="code" th:value="${r.code}"
+                           th:checked="${selected.contains(r.code)}">
+                    <span>
+                        <strong th:text="${r.label}">label</strong>
+                        <span class="muted" th:if="${r.description}" th:text="' — ' + ${r.description}"></span>
+                    </span>
+                </label>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Your own</h2>
+            <p class="muted">Anything the built-in list doesn't cover — a specific fruit, a meat type,
+                an additive. Stored as a plain code and checked against recipe ingredient tags by name.</p>
+            <div class="checks" th:if="${!custom.isEmpty()}">
+                <label class="check" th:each="c : ${custom}">
+                    <input type="checkbox" name="code" th:value="${c}" checked>
+                    <span><strong th:text="${c}">custom</strong></span>
+                </label>
+            </div>
+            <div class="field">
+                <label>Add custom <span class="muted">(comma- or line-separated)</span></label>
+                <textarea name="customCodes" rows="2" placeholder="mango, blue cheese, pork"></textarea>
+            </div>
+            <p class="hint">Uncheck one above to drop it.</p>
+        </div>
+
+        <button type="submit" class="btn">Save restrictions</button>
+    </form>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

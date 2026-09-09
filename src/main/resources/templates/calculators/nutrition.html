@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Nutrition — ' + ${result.recipeName})}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+
+<main class="container" style="max-width: 1000px;">
+    <div class="page-head">
+        <h1 th:text="'🍎 Nutrition · ' + ${result.recipeName}">Nutrition</h1>
+        <p class="muted">Summed from each line's weight × the ingredient's per-100&nbsp;g figures.
+            Recipe total / nutrition = the sum across its ingredients.</p>
+    </div>
+
+    <form th:action="@{/recipes/{id}/nutrition(id=${recipeId})}" method="get" class="toolbar">
+        <div class="field" style="margin:0;"><label>Servings</label>
+            <input type="number" name="servings" min="1" th:value="${servings}" style="max-width:110px;"></div>
+        <button type="submit" class="btn btn-sm">Recalculate</button>
+        <span class="spacer"></span>
+        <a class="btn btn-sm ghost" th:href="@{/recipes/{id}(id=${recipeId})}">← recipe</a>
+    </form>
+
+    <div class="row3">
+        <div class="card">
+            <h2>Total</h2>
+            <table class="table compact" th:with="s=${result.total}">
+                <tr><th>Calories</th><td class="num" th:text="${s.kcal != null ? #numbers.formatDecimal(s.kcal,1,0) + ' kcal' : '—'}">—</td></tr>
+                <tr><th>Protein</th><td class="num" th:text="${s.proteinG != null ? #numbers.formatDecimal(s.proteinG,1,1) + ' g' : '—'}">—</td></tr>
+                <tr><th>Carbs</th><td class="num" th:text="${s.carbsG != null ? #numbers.formatDecimal(s.carbsG,1,1) + ' g' : '—'}">—</td></tr>
+                <tr><th>Fat</th><td class="num" th:text="${s.fatG != null ? #numbers.formatDecimal(s.fatG,1,1) + ' g' : '—'}">—</td></tr>
+                <tr><th>Fiber</th><td class="num" th:text="${s.fiberG != null ? #numbers.formatDecimal(s.fiberG,1,1) + ' g' : '—'}">—</td></tr>
+                <tr><th>Sugar</th><td class="num" th:text="${s.sugarG != null ? #numbers.formatDecimal(s.sugarG,1,1) + ' g' : '—'}">—</td></tr>
+                <tr><th>Sodium</th><td class="num" th:text="${s.sodiumMg != null ? #numbers.formatDecimal(s.sodiumMg,1,0) + ' mg' : '—'}">—</td></tr>
+            </table>
+        </div>
+        <div class="card">
+            <h2 th:text="'Per serving (÷ ' + ${result.servings} + ')'">Per serving</h2>
+            <table class="table compact" th:with="s=${result.perServing}">
+                <tr><th>Calories</th><td class="num" th:text="${s.kcal != null ? #numbers.formatDecimal(s.kcal,1,0) + ' kcal' : '—'}">—</td></tr>
+                <tr><th>Protein</th><td class="num" th:text="${s.proteinG != null ? #numbers.formatDecimal(s.proteinG,1,1) + ' g' : '—'}">—</td></tr>
+                <tr><th>Carbs</th><td class="num" th:text="${s.carbsG != null ? #numbers.formatDecimal(s.carbsG,1,1) + ' g' : '—'}">—</td></tr>
+                <tr><th>Fat</th><td class="num" th:text="${s.fatG != null ? #numbers.formatDecimal(s.fatG,1,1) + ' g' : '—'}">—</td></tr>
+                <tr><th>Fiber</th><td class="num" th:text="${s.fiberG != null ? #numbers.formatDecimal(s.fiberG,1,1) + ' g' : '—'}">—</td></tr>
+                <tr><th>Sugar</th><td class="num" th:text="${s.sugarG != null ? #numbers.formatDecimal(s.sugarG,1,1) + ' g' : '—'}">—</td></tr>
+                <tr><th>Sodium</th><td class="num" th:text="${s.sodiumMg != null ? #numbers.formatDecimal(s.sodiumMg,1,0) + ' mg' : '—'}">—</td></tr>
+            </table>
+        </div>
+        <div class="card">
+            <h2>Per 100 g</h2>
+            <p class="hint" style="margin-top:-6px;"
+               th:text="${result.countedGrams != null ? 'over ' + #numbers.formatDecimal(result.countedGrams,1,0) + ' g counted' : 'nothing weighable'}">density</p>
+            <table class="table compact" th:if="${result.per100g != null}" th:with="s=${result.per100g}">
+                <tr><th>Calories</th><td class="num" th:text="${s.kcal != null ? #numbers.formatDecimal(s.kcal,1,0) + ' kcal' : '—'}">—</td></tr>
+                <tr><th>Protein</th><td class="num" th:text="${s.proteinG != null ? #numbers.formatDecimal(s.proteinG,1,1) + ' g' : '—'}">—</td></tr>
+                <tr><th>Carbs</th><td class="num" th:text="${s.carbsG != null ? #numbers.formatDecimal(s.carbsG,1,1) + ' g' : '—'}">—</td></tr>
+                <tr><th>Fat</th><td class="num" th:text="${s.fatG != null ? #numbers.formatDecimal(s.fatG,1,1) + ' g' : '—'}">—</td></tr>
+                <tr><th>Fiber</th><td class="num" th:text="${s.fiberG != null ? #numbers.formatDecimal(s.fiberG,1,1) + ' g' : '—'}">—</td></tr>
+                <tr><th>Sugar</th><td class="num" th:text="${s.sugarG != null ? #numbers.formatDecimal(s.sugarG,1,1) + ' g' : '—'}">—</td></tr>
+                <tr><th>Sodium</th><td class="num" th:text="${s.sodiumMg != null ? #numbers.formatDecimal(s.sodiumMg,1,0) + ' mg' : '—'}">—</td></tr>
+            </table>
+            <p class="muted" th:if="${result.per100g == null}">No lines could be weighed.</p>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Per-line breakdown</h2>
+        <table class="table compact">
+            <thead><tr><th>Ingredient</th><th class="num">Weight</th><th class="num">kcal</th><th>Status</th></tr></thead>
+            <tbody>
+            <tr th:each="l : ${result.linesOrEmpty()}">
+                <td th:text="${l.name}">name</td>
+                <td class="num" th:text="${l.grams != null ? #numbers.formatDecimal(l.grams,1,1) + ' g' : '—'}">—</td>
+                <td class="num" th:text="${l.counted and l.contribution != null and l.contribution.kcal != null ? #numbers.formatDecimal(l.contribution.kcal,1,0) : '—'}">—</td>
+                <td>
+                    <span class="badge ok" th:if="${l.counted}">counted</span>
+                    <span class="badge muted" th:unless="${l.counted}" th:text="${l.note}">not counted</span>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+        <div class="alert warn" th:if="${!result.notCountedOrEmpty().isEmpty()}">
+            Not included: <span th:text="${#strings.listJoin(result.notCounted, '; ')}">…</span>
+        </div>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

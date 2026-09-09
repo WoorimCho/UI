@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Error')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+
+<main class="container" style="max-width: 600px;">
+    <div class="card" style="text-align:center;">
+        <div style="font-size:56px;">🚫</div>
+        <h1 style="color:var(--pink-600); margin:10px 0;"
+            th:text="${heading} ?: 'Something went wrong'">Something went wrong</h1>
+        <p class="muted" th:if="${status}">HTTP <span th:text="${status}">500</span></p>
+        <p th:if="${detail}" th:text="${detail}" style="margin-top:12px;">details</p>
+        <p th:if="${message}" th:text="${message}" style="margin-top:12px;">details</p>
+        <div class="actions" style="justify-content:center; margin-top:18px;">
+            <a class="btn" th:href="@{/}">🏠 Home</a>
+            <a class="btn ghost" href="javascript:history.back()">← Go back</a>
+        </div>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>
