@@ -4,8 +4,10 @@ import com.example.ui.client.IngredientClient;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.LinkedHashMap;
@@ -39,23 +41,53 @@ public class NutritionReferenceController {
                       @RequestParam(required = false) Double sugarG,
                       @RequestParam(required = false) Double sodiumMg,
                       RedirectAttributes flash) {
-        Map<String, Object> body = new LinkedHashMap<>();
-        body.put("name", name.trim());
-        put(body, "basisGrams", basisGrams);
-        put(body, "kcal", kcal);
-        put(body, "proteinG", proteinG);
-        put(body, "carbsG", carbsG);
-        put(body, "fatG", fatG);
-        put(body, "fiberG", fiberG);
-        put(body, "sugarG", sugarG);
-        put(body, "sodiumMg", sodiumMg);
+        Map<String, Object> body = body(name, basisGrams, kcal, proteinG, carbsG, fatG, fiberG, sugarG, sodiumMg);
         try {
             client.addNutritionReference(body);
             flash.addFlashAttribute("notice", "Added \"" + name.trim() + "\" to the reference.");
-        } catch (org.springframework.web.client.HttpClientErrorException.Conflict e) {
+        } catch (HttpClientErrorException.Conflict e) {
             flash.addFlashAttribute("error", "\"" + name.trim() + "\" is already in the reference.");
         }
         return "redirect:/nutrition-reference";
+    }
+
+    @PostMapping("/nutrition-reference/{id}")
+    public String update(@PathVariable long id,
+                         @RequestParam String name,
+                         @RequestParam(required = false) Double basisGrams,
+                         @RequestParam(required = false) Double kcal,
+                         @RequestParam(required = false) Double proteinG,
+                         @RequestParam(required = false) Double carbsG,
+                         @RequestParam(required = false) Double fatG,
+                         @RequestParam(required = false) Double fiberG,
+                         @RequestParam(required = false) Double sugarG,
+                         @RequestParam(required = false) Double sodiumMg,
+                         RedirectAttributes flash) {
+        Map<String, Object> body = body(name, basisGrams, kcal, proteinG, carbsG, fatG, fiberG, sugarG, sodiumMg);
+        try {
+            client.updateNutritionReference(id, body);
+            flash.addFlashAttribute("notice", "Updated \"" + name.trim() + "\".");
+        } catch (HttpClientErrorException.Conflict e) {
+            flash.addFlashAttribute("error", "Another reference row is already named \"" + name.trim() + "\".");
+        } catch (HttpClientErrorException.NotFound e) {
+            flash.addFlashAttribute("error", "That reference row no longer exists.");
+        }
+        return "redirect:/nutrition-reference";
+    }
+
+    private static Map<String, Object> body(String name, Double basisGrams, Double kcal, Double proteinG,
+                                            Double carbsG, Double fatG, Double fiberG, Double sugarG, Double sodiumMg) {
+        Map<String, Object> b = new LinkedHashMap<>();
+        b.put("name", name.trim());
+        put(b, "basisGrams", basisGrams);
+        put(b, "kcal", kcal);
+        put(b, "proteinG", proteinG);
+        put(b, "carbsG", carbsG);
+        put(b, "fatG", fatG);
+        put(b, "fiberG", fiberG);
+        put(b, "sugarG", sugarG);
+        put(b, "sodiumMg", sodiumMg);
+        return b;
     }
 
     private static void put(Map<String, Object> m, String k, Double v) {

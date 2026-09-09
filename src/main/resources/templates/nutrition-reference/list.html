@@ -22,21 +22,52 @@
         <thead>
         <tr>
             <th>Food</th><th class="num">kcal</th><th class="num">Protein</th><th class="num">Carbs</th>
-            <th class="num">Fat</th><th class="num">Fiber</th><th class="num">Sugar</th><th class="num">Sodium</th>
+            <th class="num">Fat</th><th class="num">Fiber</th><th class="num">Sugar</th><th class="num">Sodium</th><th></th>
         </tr>
         </thead>
         <tbody>
-        <tr th:each="r : ${rows}">
-            <td th:text="${r.name}">food</td>
-            <td class="num" th:text="${r.kcal != null ? #numbers.formatDecimal(r.kcal,1,0) : '—'}">0</td>
-            <td class="num" th:text="${r.proteinG != null ? #numbers.formatDecimal(r.proteinG,1,1) : '—'}">0</td>
-            <td class="num" th:text="${r.carbsG != null ? #numbers.formatDecimal(r.carbsG,1,1) : '—'}">0</td>
-            <td class="num" th:text="${r.fatG != null ? #numbers.formatDecimal(r.fatG,1,1) : '—'}">0</td>
-            <td class="num" th:text="${r.fiberG != null ? #numbers.formatDecimal(r.fiberG,1,1) : '—'}">0</td>
-            <td class="num" th:text="${r.sugarG != null ? #numbers.formatDecimal(r.sugarG,1,1) : '—'}">0</td>
-            <td class="num" th:text="${r.sodiumMg != null ? #numbers.formatDecimal(r.sodiumMg,1,0) : '—'}">0</td>
-        </tr>
-        <tr th:if="${rows.isEmpty()}"><td colspan="8" class="muted">Nothing matches.</td></tr>
+        <th:block th:each="r : ${rows}">
+            <tr>
+                <td th:text="${r.name}">food</td>
+                <td class="num" th:text="${r.kcal != null ? #numbers.formatDecimal(r.kcal,1,0) : '—'}">0</td>
+                <td class="num" th:text="${r.proteinG != null ? #numbers.formatDecimal(r.proteinG,1,1) : '—'}">0</td>
+                <td class="num" th:text="${r.carbsG != null ? #numbers.formatDecimal(r.carbsG,1,1) : '—'}">0</td>
+                <td class="num" th:text="${r.fatG != null ? #numbers.formatDecimal(r.fatG,1,1) : '—'}">0</td>
+                <td class="num" th:text="${r.fiberG != null ? #numbers.formatDecimal(r.fiberG,1,1) : '—'}">0</td>
+                <td class="num" th:text="${r.sugarG != null ? #numbers.formatDecimal(r.sugarG,1,1) : '—'}">0</td>
+                <td class="num" th:text="${r.sodiumMg != null ? #numbers.formatDecimal(r.sodiumMg,1,0) : '—'}">0</td>
+                <td><button type="button" class="btn btn-sm ghost" data-edit-toggle>✏️ Edit</button></td>
+            </tr>
+            <tr hidden data-edit-row>
+                <td colspan="9">
+                    <form th:action="@{/nutrition-reference/{id}(id=${r.id})}" method="post">
+                        <div class="field" style="max-width:280px;"><label>Food name</label>
+                            <input type="text" name="name" required th:value="${r.name}"></div>
+                        <div class="row3">
+                            <div class="field"><label>Basis (g)</label>
+                                <input type="number" step="any" name="basisGrams" th:value="${r.basisGrams} ?: 100"></div>
+                            <div class="field"><label>Calories</label>
+                                <input type="number" step="any" name="kcal" th:value="${r.kcal}"></div>
+                            <div class="field"><label>Protein (g)</label>
+                                <input type="number" step="any" name="proteinG" th:value="${r.proteinG}"></div>
+                            <div class="field"><label>Carbs (g)</label>
+                                <input type="number" step="any" name="carbsG" th:value="${r.carbsG}"></div>
+                            <div class="field"><label>Fat (g)</label>
+                                <input type="number" step="any" name="fatG" th:value="${r.fatG}"></div>
+                            <div class="field"><label>Fiber (g)</label>
+                                <input type="number" step="any" name="fiberG" th:value="${r.fiberG}"></div>
+                            <div class="field"><label>Sugar (g)</label>
+                                <input type="number" step="any" name="sugarG" th:value="${r.sugarG}"></div>
+                            <div class="field"><label>Sodium (mg)</label>
+                                <input type="number" step="any" name="sodiumMg" th:value="${r.sodiumMg}"></div>
+                        </div>
+                        <p class="hint">A blank figure clears it. Any figure left blank is stored as “no data”.</p>
+                        <button type="submit" class="btn btn-sm">Save changes</button>
+                    </form>
+                </td>
+            </tr>
+        </th:block>
+        <tr th:if="${rows.isEmpty()}"><td colspan="9" class="muted">Nothing matches.</td></tr>
         </tbody>
     </table>
 
@@ -60,6 +91,17 @@
         </form>
     </div>
 </main>
+
+<script>
+document.querySelectorAll('[data-edit-toggle]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+        var row = btn.closest('tr').nextElementSibling;
+        if (row && row.hasAttribute('data-edit-row')) {
+            row.hidden = !row.hidden;
+        }
+    });
+});
+</script>
 
 <footer th:replace="~{fragments/layout :: footer}"></footer>
 </body>

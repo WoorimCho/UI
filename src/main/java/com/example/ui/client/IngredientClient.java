@@ -191,6 +191,12 @@ public class IngredientClient {
                 .body(body).retrieve().body(NutritionRef.class);
     }
 
+    /** PUT — replace a reference row's figures. 404 (NotFound) if gone, 409 (Conflict) if the new name collides. */
+    public NutritionRef updateNutritionReference(long id, Map<String, Object> body) {
+        return http.put().uri("/api/nutrition-reference/{id}", id).contentType(MediaType.APPLICATION_JSON)
+                .body(body).retrieve().body(NutritionRef.class);
+    }
+
     private static Map<String, Object> nonNull(Object... kv) {
         Map<String, Object> m = new java.util.LinkedHashMap<>();
         for (int i = 0; i < kv.length; i += 2) {
