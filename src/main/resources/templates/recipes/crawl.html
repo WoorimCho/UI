@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Crawl for recipes')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+
+<main class="container" style="max-width: 900px;">
+    <div class="page-head">
+        <h1>🕸️ Crawl a site for recipes</h1>
+        <p class="muted">Give one or more seed pages — a recipe, an index, a tag page. The crawler
+            walks same-host links, respects <code>robots.txt</code> and a per-host delay, and
+            imports every page that has a schema.org recipe.</p>
+    </div>
+
+    <div class="alert error" th:if="${error}" th:text="${error}"></div>
+
+    <div class="card">
+        <form th:action="@{/recipes/crawl}" method="post" class="stack">
+            <div class="field">
+                <label for="seeds">Seed URLs <span class="muted">(one per line, or comma-separated)</span></label>
+                <textarea id="seeds" name="seeds" rows="3" required
+                          placeholder="https://example.com/recipes/&#10;https://example.com/tag/dinner/"
+                          th:text="${seeds}"></textarea>
+            </div>
+            <div class="row3">
+                <div class="field"><label for="maxPages">Max pages</label>
+                    <input type="number" id="maxPages" name="maxPages" min="1" max="200"
+                           th:value="${maxPages != null ? maxPages : 8}"></div>
+                <div class="field"><label for="maxDepth">Link depth</label>
+                    <input type="number" id="maxDepth" name="maxDepth" min="0" max="5"
+                           th:value="${maxDepth != null ? maxDepth : 1}"></div>
+                <div class="field"><label for="creator">Creator <span class="muted">(optional)</span></label>
+                    <input type="text" id="creator" name="creator" placeholder="import:&lt;host&gt;"></div>
+            </div>
+            <label class="check"><input type="checkbox" name="dryRun" value="true" th:checked="${dryRun}">
+                Dry run — find recipes, write nothing</label>
+            <label class="check"><input type="checkbox" name="allHosts" value="true" th:checked="${allHosts}">
+                Follow links to other hosts too</label>
+            <div class="actions">
+                <button type="submit" class="btn">Start crawl</button>
+                <a class="btn ghost" th:href="@{/recipes/import-url}">← single URL</a>
+            </div>
+            <p class="hint">A larger crawl can take a minute or two — the page waits for it to finish.</p>
+        </form>
+    </div>
+
+    <div class="card" th:if="${report != null}">
+        <h2>Result</h2>
+        <p>
+            <strong th:text="${report.pagesFetched}">0</strong> pages fetched,
+            <strong th:text="${report.recipesFound}">0</strong> with a recipe,
+            <strong th:text="${report.importedOrEmpty().size()}">0</strong>
+            <span th:text="${dryRun} ? 'would import' : 'imported'">imported</span>.
+            <span class="muted" th:text="'Stopped: ' + ${report.stoppedBecause}">stopped</span>
+        </p>
+
+        <table class="table compact" th:if="${!report.importedOrEmpty().isEmpty()}">
+            <thead><tr><th>Recipe</th><th class="num">Ingredients</th><th class="num">New</th><th>Source</th></tr></thead>
+            <tbody>
+            <tr th:each="i : ${report.importedOrEmpty()}">
+                <td>
+                    <a th:if="${i.created}" th:href="@{/recipes/{id}(id=${i.recipeId})}" th:text="${i.name}">name</a>
+                    <span th:unless="${i.created}" th:text="${i.name}">name</span>
+                </td>
+                <td class="num" th:text="${i.ingredientCount}">0</td>
+                <td class="num" th:text="${i.ingredientsCreated}">0</td>
+                <td class="muted" style="word-break:break-all;">
+                    <a th:href="${i.url}" th:text="${i.url}" target="_blank" rel="noopener noreferrer">url</a></td>
+            </tr>
+            </tbody>
+        </table>
+
+        <details th:if="${!report.skippedOrEmpty().isEmpty()}" style="margin-top:12px;">
+            <summary th:text="${report.skippedOrEmpty().size()} + ' skipped'">skipped</summary>
+            <table class="table compact">
+                <thead><tr><th>URL</th><th>Reason</th></tr></thead>
+                <tbody>
+                <tr th:each="s : ${report.skippedOrEmpty()}">
+                    <td class="muted" style="word-break:break-all;" th:text="${s.url}">url</td>
+                    <td th:text="${s.reason}">reason</td>
+                </tr>
+                </tbody>
+            </table>
+        </details>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

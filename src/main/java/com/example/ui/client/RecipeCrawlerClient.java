@@ -34,6 +34,22 @@ public class RecipeCrawlerClient {
                 .retrieve().body(Imported.class);
     }
 
+    public CrawlReport crawl(List<String> seeds, Integer maxPages, Integer maxDepth,
+                             boolean sameHostOnly, boolean dryRun, String creator) {
+        var body = new java.util.LinkedHashMap<String, Object>();
+        body.put("seeds", seeds);
+        body.put("maxPages", maxPages);
+        body.put("maxDepth", maxDepth);
+        body.put("sameHostOnly", sameHostOnly);
+        body.put("dryRun", dryRun);
+        if (creator != null && !creator.isBlank()) {
+            body.put("creator", creator);
+        }
+        return http.post().uri("/api/crawl").contentType(MediaType.APPLICATION_JSON)
+                .body(body)
+                .retrieve().body(CrawlReport.class);
+    }
+
     // ── shapes (mirror recipe-crawler's DTOs) ────────────────────────────────
 
     public record Draft(String sourceUrl, String name, String yield,
@@ -52,5 +68,22 @@ public class RecipeCrawlerClient {
 
     public record Imported(long recipeId, String name, int ingredientCount,
                            int stepCount, int ingredientsCreated, String sourceUrl) {
+    }
+
+    public record CrawlReport(List<String> seeds, int pagesFetched, int recipesFound,
+                              List<Item> imported, List<Skip> skipped, String stoppedBecause) {
+        public List<Item> importedOrEmpty() {
+            return imported == null ? List.of() : imported;
+        }
+        public List<Skip> skippedOrEmpty() {
+            return skipped == null ? List.of() : skipped;
+        }
+
+        public record Item(String url, long recipeId, String name,
+                           int ingredientCount, int ingredientsCreated, boolean created) {
+        }
+
+        public record Skip(String url, String reason) {
+        }
     }
 }

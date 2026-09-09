@@ -4,7 +4,10 @@ import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
+
+import java.time.Duration;
 
 /**
  * One {@link RestClient} per downstream. The UI talks to the three catalogue
@@ -57,11 +60,20 @@ public class ClientConfig {
                 .build();
     }
 
+    /**
+     * A crawl walks many pages with a per-host politeness delay, so it can take
+     * a minute or more — this client overrides the short shared read timeout.
+     * No circuit breaker: it's an infrequent, deliberately slow operation and a
+     * long crawl would otherwise count against the breaker's slow-call rate.
+     */
     @Bean
     RestClient recipeCrawlerRestClient(RestClient.Builder builder,
                                        @Value("${recipe-crawler.url}") String url) {
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(Duration.ofSeconds(3));
+        factory.setReadTimeout(Duration.ofMinutes(3));
         return builder.baseUrl(url)
-                .requestInterceptor(DownstreamResilience.forDownstream(breakers, "recipe-crawler"))
+                .requestFactory(factory)
                 .build();
     }
 }

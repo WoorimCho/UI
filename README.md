@@ -16,7 +16,7 @@ every page is a call to a catalogue, the User service, or the BFF, rendered.
 | RecipeCatalogue `:8083` | recipes, steps/tools, structured quantities, random, CSV import |
 | User `:8084` | register / authenticate, profile, password, restrictions, favourites |
 | BFF `:8080` | composed personalised recipe, restriction conflicts, the 3 calculators, `JSESSIONID` |
-| recipe-crawler `:8086` | import a recipe from a URL (`/recipes/import-url`) |
+| recipe-crawler `:8086` | import a recipe from a URL (`/recipes/import-url`) or crawl a site (`/recipes/crawl`) |
 
 The UI keeps **its own `HttpSession`**. Login = User `POST /api/authenticate`
 (for the account id) **and** BFF `POST /bff/login` as a form post (to capture its
@@ -33,6 +33,7 @@ The UI keeps **its own `HttpSession`**. Login = User `POST /api/authenticate`
 | `/nutrition-reference` `POST /nutrition-reference` | browse + **add a food** |
 | `/recipes` … `/recipes/{id}` `/random` `/new` `/{id}/edit` `POST /{id}/delete` | recipe CRUD; dynamic step/ingredient form with `amount`+`unit`; "Surprise me" |
 | `/recipes/import-url` `POST …/preview` `POST …/commit` | **import a recipe from a URL** (via the `recipe-crawler` service): preview the parsed draft, then create it |
+| `/recipes/crawl` `POST /recipes/crawl` | **crawl a site** from seed URLs — same-host link-following, robots.txt + rate-limited, bulk import; dry-run option |
 | `/recipes/{id}/nutrition` `/calories` `/portions` `/portions.json` | calculators (login-gated) — total / per-serving / **per 100 g** / **per gram**; nutrition shows a **weight ⇄ volume** column; portions has a **live batch-size slider** and a grams / ml / as-written toggle |
 | `/account` `/account/restrictions` `/account/favourites` | profile, password, **theme picker**, dietary restrictions (incl. **custom** codes), favourite recipes, favourite substitutions (**by name**) |
 | `/import` | CSV upload for ingredients / recipes |
@@ -76,13 +77,17 @@ cd .. && docker compose up --build ui      # with the rest of the stack
 
 ## Resilience
 
-Every downstream `RestClient` (the three catalogues, the BFF, and
-recipe-crawler) has a short connect/read timeout (`spring.http.clients.*`) and a
-per-service **circuit breaker** (`config/DownstreamResilience` +
-`CircuitBreakerInterceptor`, resilience4j). A timeout or a 5xx is a fault; a 4xx
-is not. When a breaker opens, the page fails fast to the 503 error page instead
-of hanging. Breaker state is on `/actuator/prometheus`
-(`resilience4j_circuitbreaker_*`).
+Every downstream `RestClient` (the three catalogues and the BFF) has a short
+connect/read timeout (`spring.http.clients.*`) and a per-service **circuit
+breaker** (`config/DownstreamResilience` + `CircuitBreakerInterceptor`,
+resilience4j). A timeout or a 5xx is a fault; a 4xx is not. When a breaker opens,
+the page fails fast to the 503 error page instead of hanging. Breaker state is on
+`/actuator/prometheus` (`resilience4j_circuitbreaker_*`).
+
+The **recipe-crawler** client is the exception: a 3 s connect timeout but a
+3-minute read timeout (a crawl walks many pages with a politeness delay) and no
+breaker (an intentionally slow call would otherwise count against its slow-call
+rate).
 
 ## Notes / known gaps
 
