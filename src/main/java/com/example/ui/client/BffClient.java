@@ -174,7 +174,7 @@ public class BffClient {
     }
 
     public record LineNutrition(
-            Long ingredientId, String name, Double amount, String unit, Double grams,
+            Long ingredientId, String name, Double amount, String unit, Double grams, Double millilitres,
             boolean optional, boolean counted, String note, NutritionSum contribution) {
     }
 
@@ -200,7 +200,8 @@ public class BffClient {
 
     public record ScaledLine(
             Long ingredientId, String name, Double originalAmount, String unit,
-            Double scaledAmount, String quantityText, boolean scaled) {
+            Double scaledAmount, Double scaledGrams, Double scaledMillilitres,
+            String quantityText, boolean scaled) {
     }
 
     public record PortionResult(Long recipeId, String recipeName, double scale, List<ScaledLine> lines) {

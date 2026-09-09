@@ -63,12 +63,15 @@
 
     <div class="card">
         <h2>Per-line breakdown</h2>
+        <p class="hint" style="margin-top:-6px;">Weight ⇄ volume shown for lines whose ingredient has a density.</p>
         <table class="table compact">
-            <thead><tr><th>Ingredient</th><th class="num">Weight</th><th class="num">kcal</th><th>Status</th></tr></thead>
+            <thead><tr><th>Ingredient</th><th class="num">Amount</th><th class="num">Weight</th><th class="num">Volume</th><th class="num">kcal</th><th>Status</th></tr></thead>
             <tbody>
             <tr th:each="l : ${result.linesOrEmpty()}">
                 <td th:text="${l.name}">name</td>
+                <td class="num" th:text="${l.amount != null ? #numbers.formatDecimal(l.amount,1,1) + ' ' + l.unit : '—'}">—</td>
                 <td class="num" th:text="${l.grams != null ? #numbers.formatDecimal(l.grams,1,1) + ' g' : '—'}">—</td>
+                <td class="num" th:text="${l.millilitres != null ? #numbers.formatDecimal(l.millilitres,1,0) + ' ml' : '—'}">—</td>
                 <td class="num" th:text="${l.counted and l.contribution != null and l.contribution.kcal != null ? #numbers.formatDecimal(l.contribution.kcal,1,0) : '—'}">—</td>
                 <td>
                     <span class="badge ok" th:if="${l.counted}">counted</span>

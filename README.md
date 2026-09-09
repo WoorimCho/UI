@@ -16,6 +16,7 @@ every page is a call to a catalogue, the User service, or the BFF, rendered.
 | RecipeCatalogue `:8083` | recipes, steps/tools, structured quantities, random, CSV import |
 | User `:8084` | register / authenticate, profile, password, restrictions, favourites |
 | BFF `:8080` | composed personalised recipe, restriction conflicts, the 3 calculators, `JSESSIONID` |
+| recipe-crawler `:8086` | import a recipe from a URL (`/recipes/import-url`) |
 
 The UI keeps **its own `HttpSession`**. Login = User `POST /api/authenticate`
 (for the account id) **and** BFF `POST /bff/login` as a form post (to capture its
@@ -27,11 +28,12 @@ The UI keeps **its own `HttpSession`**. Login = User `POST /api/authenticate`
 |---|---|
 | `/` | dashboard (counts + tiles) |
 | `/login`, `/register`, `POST /logout` | auth |
-| `/ingredients` … `/ingredients/{id}` `/new` `/{id}/edit` `POST /{id}/nutrition` `POST /{id}/delete` | ingredient CRUD + nutrition; name search + autocomplete; delete blocked when a recipe uses it |
+| `/ingredients` … `/ingredients/{id}` `/new` `/{id}/edit` `POST /{id}/nutrition` `POST /{id}/delete` | ingredient CRUD + nutrition + **density (g/ml)**; name search + autocomplete; delete blocked when a recipe uses it |
 | `/tags` `POST /tags` `POST /tags/{id}/delete` `POST /tags/merge` | tag browser; **merge by name or id** |
 | `/nutrition-reference` `POST /nutrition-reference` | browse + **add a food** |
 | `/recipes` … `/recipes/{id}` `/random` `/new` `/{id}/edit` `POST /{id}/delete` | recipe CRUD; dynamic step/ingredient form with `amount`+`unit`; "Surprise me" |
-| `/recipes/{id}/nutrition` `/calories` `/portions` | calculators (login-gated) — total / per-serving / **per 100 g** / **per gram** |
+| `/recipes/import-url` `POST …/preview` `POST …/commit` | **import a recipe from a URL** (via the `recipe-crawler` service): preview the parsed draft, then create it |
+| `/recipes/{id}/nutrition` `/calories` `/portions` `/portions.json` | calculators (login-gated) — total / per-serving / **per 100 g** / **per gram**; nutrition shows a **weight ⇄ volume** column; portions has a **live batch-size slider** and a grams / ml / as-written toggle |
 | `/account` `/account/restrictions` `/account/favourites` | profile, password, **theme picker**, dietary restrictions (incl. **custom** codes), favourite recipes, favourite substitutions (**by name**) |
 | `/import` | CSV upload for ingredients / recipes |
 | `/suggest/{tags,ingredients,recipes}` | JSON, backs the `<datalist>` autocompletes |
@@ -61,6 +63,7 @@ cd .. && docker compose up --build ui      # with the rest of the stack
 | `RECIPE_CATALOGUE_URL` | `http://localhost:8083` |
 | `USER_SERVICE_URL` | `http://localhost:8084` |
 | `BFF_URL` | `http://localhost:8080` |
+| `RECIPE_CRAWLER_URL` | `http://localhost:8086` |
 | `ZIPKIN_ENDPOINT` | `http://localhost:9411/api/v2/spans` |
 | `TRACING_SAMPLE_RATE` | `1.0` |
 | `DOWNSTREAM_CONNECT_TIMEOUT` / `DOWNSTREAM_READ_TIMEOUT` | `2s` / `8s` — outbound HTTP timeouts |

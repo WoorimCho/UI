@@ -24,6 +24,13 @@
                        placeholder="diet:vegan, form:raw, allergen:gluten">
                 <div class="hint">Namespaced tags like <code>diet:vegan</code> group in the tag browser.</div>
             </div>
+            <div class="field">
+                <label for="densityGPerMl">Density <span class="muted">(g/ml, optional)</span></label>
+                <input type="number" id="densityGPerMl" name="densityGPerMl" min="0" step="0.01"
+                       th:value="${ingredient != null ? ingredient.densityGPerMl : ''}"
+                       placeholder="e.g. 0.53 for flour, 1.03 for milk">
+                <div class="hint">Lets the recipe calculators switch this ingredient between volume (cups, tbsp) and mass (g).</div>
+            </div>
             <div class="actions">
                 <button type="submit" class="btn" th:text="${mode == 'edit' ? 'Save changes' : 'Create'}">Create</button>
                 <a class="btn ghost" th:href="${ingredient != null ? '/ingredients/' + ingredient.id : '/ingredients'}">Cancel</a>

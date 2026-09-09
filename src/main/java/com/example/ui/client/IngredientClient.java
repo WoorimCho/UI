@@ -78,16 +78,26 @@ public class IngredientClient {
         return byId;
     }
 
-    public Ingredient create(String name, List<String> tags) {
+    public Ingredient create(String name, List<String> tags, Double densityGPerMl) {
         return http.post().uri("/api/ingredients").contentType(MediaType.APPLICATION_JSON)
-                .body(Map.of("name", name, "tags", tags == null ? List.of() : tags))
+                .body(ingredientBody(name, tags, densityGPerMl))
                 .retrieve().body(Ingredient.class);
     }
 
-    public Ingredient update(long id, String name, List<String> tags) {
+    public Ingredient update(long id, String name, List<String> tags, Double densityGPerMl) {
         return http.put().uri("/api/ingredients/{id}", id).contentType(MediaType.APPLICATION_JSON)
-                .body(Map.of("name", name, "tags", tags == null ? List.of() : tags))
+                .body(ingredientBody(name, tags, densityGPerMl))
                 .retrieve().body(Ingredient.class);
+    }
+
+    private static Map<String, Object> ingredientBody(String name, List<String> tags, Double densityGPerMl) {
+        Map<String, Object> body = new java.util.LinkedHashMap<>();
+        body.put("name", name);
+        body.put("tags", tags == null ? List.of() : tags);
+        if (densityGPerMl != null) {          // omit -> service leaves it untouched
+            body.put("densityGPerMl", densityGPerMl);
+        }
+        return body;
     }
 
     public void delete(long id) {
@@ -193,12 +203,15 @@ public class IngredientClient {
 
     // ── shapes ───────────────────────────────────────────────────────────────
 
-    public record Ingredient(Long id, String name, List<Tag> tags, Nutrition nutrition) {
+    public record Ingredient(Long id, String name, List<Tag> tags, Nutrition nutrition, Double densityGPerMl) {
         public List<Tag> tagsOrEmpty() {
             return tags == null ? List.of() : tags;
         }
         public boolean hasNutrition() {
             return nutrition != null;
+        }
+        public boolean hasDensity() {
+            return densityGPerMl != null && densityGPerMl > 0;
         }
     }
 

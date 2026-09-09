@@ -56,4 +56,12 @@ public class ClientConfig {
                 .requestInterceptor(DownstreamResilience.forDownstream(breakers, "bff"))
                 .build();
     }
+
+    @Bean
+    RestClient recipeCrawlerRestClient(RestClient.Builder builder,
+                                       @Value("${recipe-crawler.url}") String url) {
+        return builder.baseUrl(url)
+                .requestInterceptor(DownstreamResilience.forDownstream(breakers, "recipe-crawler"))
+                .build();
+    }
 }

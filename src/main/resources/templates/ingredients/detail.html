@@ -18,6 +18,10 @@
             <span class="chip" th:each="t : ${ingredient.tagsOrEmpty()}" th:text="${t.name}">tag</span>
             <span class="muted" th:if="${ingredient.tagsOrEmpty().isEmpty()}">No tags yet.</span>
         </div>
+        <p class="muted" style="margin-top:10px;" th:if="${ingredient.hasDensity()}">
+            Density: <strong th:text="${#numbers.formatDecimal(ingredient.densityGPerMl,1,2)} + ' g/ml'">1.00 g/ml</strong>
+            — the recipe calculators can switch this between volume and mass.
+        </p>
     </div>
 
     <div class="card">

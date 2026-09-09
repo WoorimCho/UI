@@ -19,6 +19,7 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addInterceptor(authInterceptor)
                 .addPathPatterns("/account/**",
                         "/recipes/*/nutrition", "/recipes/*/calories", "/recipes/*/portions",
+                        "/recipes/*/portions.json",
                         "/recipes/*/composed",
                         "/favourites/**");
     }

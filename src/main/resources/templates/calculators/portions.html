@@ -4,19 +4,62 @@
 <body>
 <nav th:replace="~{fragments/layout :: nav}"></nav>
 
-<main class="container" style="max-width: 780px;">
+<main class="container" style="max-width: 820px;">
     <div class="page-head">
         <h1>⚖️ Portions</h1>
-        <p class="muted">Scale every numeric line amount. Give a multiplier, or "I want this much of one line".</p>
+        <p class="muted">Drag the slider to resize the batch — every line amount scales with it.
+            Switch the amount column between how it's written, grams, and millilitres.</p>
+    </div>
+
+    <div class="card" th:attr="data-recipe-id=${recipeId}">
+        <div class="stack">
+            <div class="field">
+                <label>Batch size — <strong id="scaleLabel">×1</strong></label>
+                <input type="range" id="scaleRange" min="0.25" max="4" step="0.25"
+                       th:value="${scale != null ? scale : 1}" style="width:100%;">
+                <div class="row3" style="margin-top:8px;">
+                    <div class="field" style="max-width:160px;">
+                        <label>exact multiplier</label>
+                        <input type="number" id="scaleNum" step="0.05" min="0.05"
+                               th:value="${scale != null ? scale : 1}">
+                    </div>
+                    <div class="field">
+                        <label>show amounts as</label>
+                        <div class="chips" id="unitToggle">
+                            <button type="button" class="chip is-on" data-view="as">as written</button>
+                            <button type="button" class="chip" data-view="g">grams</button>
+                            <button type="button" class="chip" data-view="ml">millilitres</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="card">
+        <h2 id="resultHead" th:text="${result != null ? ('Scaled ×' + #numbers.formatDecimal(result.scale,1,2) + ' — ' + result.recipeName) : 'Scaled'}">Scaled</h2>
+        <table class="table compact">
+            <thead><tr><th>Ingredient</th><th class="num">Original</th><th class="num">Scaled</th></tr></thead>
+            <tbody id="rows">
+            <tr th:each="l : ${result != null ? result.linesOrEmpty() : #lists.toList({})}"
+                th:attr="data-g=${l.scaledGrams},data-ml=${l.scaledMillilitres},data-as=${l.scaled ? (#numbers.formatDecimal(l.scaledAmount,1,1) + ' ' + l.unit) : (l.quantityText ?: '')}">
+                <td th:text="${l.name}">name</td>
+                <td class="num" th:text="${l.originalAmount != null ? #numbers.formatDecimal(l.originalAmount,1,1) + ' ' + l.unit : (l.quantityText ?: '—')}">—</td>
+                <td class="num cell-scaled">
+                    <strong th:if="${l.scaled}" th:text="${#numbers.formatDecimal(l.scaledAmount,1,1)} + ' ' + ${l.unit}">x</strong>
+                    <span class="muted" th:unless="${l.scaled}" th:text="${l.quantityText ?: '(free text — not scaled)'}">—</span>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+        <p class="hint">Grams / millilitres appear only for lines whose ingredient has a density
+            (set one on the ingredient, or it's a common food we recognise).</p>
+    </div>
+
+    <div class="card">
+        <h2>Or: scale from one line</h2>
+        <p class="muted">“I want to use exactly this much of one ingredient.”</p>
         <form th:action="@{/recipes/{id}/portions(id=${recipeId})}" method="get" class="stack">
-            <div class="field" style="max-width:200px;">
-                <label>Multiplier</label>
-                <input type="number" step="any" name="scale" th:value="${scale}" placeholder="e.g. 2.5">
-            </div>
-            <p class="muted">— or —</p>
             <div class="row3">
                 <div class="field"><label>Anchor ingredient id</label><input type="number" name="anchorIngredientId"></div>
                 <div class="field"><label>I want this amount</label><input type="number" step="any" name="anchorAmount"></div>
@@ -29,29 +72,93 @@
                     </select></div>
             </div>
             <div class="actions">
-                <button type="submit" class="btn">Scale</button>
+                <button type="submit" class="btn">Scale from this line</button>
                 <a class="btn ghost" th:href="@{/recipes/{id}(id=${recipeId})}">← recipe</a>
             </div>
         </form>
     </div>
-
-    <div class="card" th:if="${result != null}">
-        <h2 th:text="'Scaled ×' + ${#numbers.formatDecimal(result.scale,1,2)} + ' — ' + ${result.recipeName}">Scaled</h2>
-        <table class="table compact">
-            <thead><tr><th>Ingredient</th><th class="num">Original</th><th class="num">Scaled</th></tr></thead>
-            <tbody>
-            <tr th:each="l : ${result.linesOrEmpty()}">
-                <td th:text="${l.name}">name</td>
-                <td class="num" th:text="${l.originalAmount != null ? #numbers.formatDecimal(l.originalAmount,1,1) + ' ' + l.unit : (l.quantityText ?: '—')}">—</td>
-                <td class="num">
-                    <strong th:if="${l.scaled}" th:text="${#numbers.formatDecimal(l.scaledAmount,1,1)} + ' ' + ${l.unit}">x</strong>
-                    <span class="muted" th:unless="${l.scaled}" th:text="${l.quantityText ?: '(free text — not scaled)'}">—</span>
-                </td>
-            </tr>
-            </tbody>
-        </table>
-    </div>
 </main>
+
+<script th:inline="javascript">
+(function () {
+    const recipeId = /*[[${recipeId}]]*/ 0;
+    const range = document.getElementById('scaleRange');
+    const num = document.getElementById('scaleNum');
+    const label = document.getElementById('scaleLabel');
+    const rows = document.getElementById('rows');
+    const head = document.getElementById('resultHead');
+    const toggle = document.getElementById('unitToggle');
+    let view = 'as';
+    let timer = null;
+
+    function fmt(n) { return (Math.round(n * 10) / 10).toString(); }
+
+    function applyView() {
+        rows.querySelectorAll('tr').forEach(function (tr) {
+            const cell = tr.querySelector('.cell-scaled');
+            if (!cell) return;
+            const g = tr.getAttribute('data-g');
+            const ml = tr.getAttribute('data-ml');
+            const as = tr.getAttribute('data-as') || '';
+            let out;
+            if (view === 'g') out = (g && g !== 'null') ? fmt(parseFloat(g)) + ' g' : '—';
+            else if (view === 'ml') out = (ml && ml !== 'null') ? fmt(parseFloat(ml)) + ' ml' : '—';
+            else out = as || '—';
+            cell.innerHTML = as || view !== 'as'
+                ? '<strong>' + out + '</strong>'
+                : '<span class="muted">(free text — not scaled)</span>';
+        });
+    }
+
+    function render(data) {
+        head.textContent = 'Scaled ×' + (Math.round(data.scale * 100) / 100) + ' — ' + data.recipeName;
+        rows.innerHTML = '';
+        (data.lines || []).forEach(function (l) {
+            const tr = document.createElement('tr');
+            const asText = l.scaled ? (fmt(l.scaledAmount) + ' ' + l.unit) : (l.quantityText || '');
+            tr.setAttribute('data-g', l.scaledGrams == null ? 'null' : l.scaledGrams);
+            tr.setAttribute('data-ml', l.scaledMillilitres == null ? 'null' : l.scaledMillilitres);
+            tr.setAttribute('data-as', asText);
+            const orig = l.originalAmount != null ? (fmt(l.originalAmount) + ' ' + l.unit) : (l.quantityText || '—');
+            tr.innerHTML = '<td></td><td class="num"></td><td class="num cell-scaled"></td>';
+            tr.children[0].textContent = l.name;
+            tr.children[1].textContent = orig;
+            rows.appendChild(tr);
+        });
+        applyView();
+    }
+
+    function fetchScaled(scale) {
+        fetch('/recipes/' + recipeId + '/portions.json?scale=' + encodeURIComponent(scale), {
+            headers: { 'Accept': 'application/json' }
+        }).then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+          .then(render)
+          .catch(function () { /* leave the last good render in place */ });
+    }
+
+    function onScale(v, from) {
+        v = Math.max(parseFloat(v) || 1, 0.05);
+        label.textContent = '×' + v;
+        if (from !== 'range' && v >= 0.25 && v <= 4) range.value = v;
+        if (from !== 'num') num.value = v;
+        clearTimeout(timer);
+        timer = setTimeout(function () { fetchScaled(v); }, 180);
+    }
+
+    range && range.addEventListener('input', function () { onScale(range.value, 'range'); });
+    num && num.addEventListener('input', function () { onScale(num.value, 'num'); });
+    toggle && toggle.addEventListener('click', function (e) {
+        const b = e.target.closest('button[data-view]');
+        if (!b) return;
+        view = b.getAttribute('data-view');
+        toggle.querySelectorAll('button').forEach(function (x) { x.classList.toggle('is-on', x === b); });
+        applyView();
+    });
+
+    // populate on load (covers the no-?scale first visit)
+    onScale(num ? num.value : 1, 'init');
+})();
+</script>
 
 <footer th:replace="~{fragments/layout :: footer}"></footer>
 </body>

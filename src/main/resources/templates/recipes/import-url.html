@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Import from URL')}"></head>
+<body>
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+
+<main class="container" style="max-width: 820px;">
+    <div class="page-head">
+        <h1>🌐 Import a recipe from a URL</h1>
+        <p class="muted">Paste a link to a recipe page. We read its embedded schema.org data,
+            match the ingredients against the catalogue, and (on import) create anything new.</p>
+    </div>
+
+    <div th:replace="~{fragments/layout :: flash}"></div>
+    <div class="alert error" th:if="${error}" th:text="${error}"></div>
+
+    <div class="card">
+        <form th:action="@{/recipes/import-url/preview}" method="post" class="stack">
+            <div class="field">
+                <label for="url">Recipe URL</label>
+                <input type="url" id="url" name="url" th:value="${url}" required
+                       placeholder="https://…/some-recipe">
+            </div>
+            <div class="actions">
+                <button type="submit" class="btn">Preview</button>
+                <a class="btn ghost" th:href="@{/recipes}">← recipes</a>
+            </div>
+        </form>
+    </div>
+
+    <div class="card" th:if="${draft != null}">
+        <h2 th:text="${draft.name}">Recipe name</h2>
+        <p class="muted" th:if="${draft.yield}" th:text="'Yield: ' + ${draft.yield}">Yield</p>
+
+        <h3>Ingredients <span class="muted" th:text="'(' + ${draft.ingredientsOrEmpty().size()} + ')'">(0)</span></h3>
+        <table class="table compact">
+            <thead><tr><th>Amount</th><th>Unit</th><th>Ingredient</th><th>Note</th><th>Catalogue</th></tr></thead>
+            <tbody>
+            <tr th:each="i : ${draft.ingredientsOrEmpty()}">
+                <td class="num" th:text="${i.amount != null ? #numbers.formatDecimal(i.amount,1,2) : '—'}">—</td>
+                <td th:text="${i.unit ?: '—'}">—</td>
+                <td th:text="${i.name}">name</td>
+                <td class="muted" th:text="${i.note ?: ''}"></td>
+                <td>
+                    <span class="badge ok" th:if="${i.matchedId != null}" th:text="'#' + ${i.matchedId}">#1</span>
+                    <span class="badge warn" th:if="${i.matchedId == null and i.willCreate}">will create</span>
+                    <span class="badge muted" th:if="${i.matchedId == null and !i.willCreate}">skipped</span>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        <h3>Steps <span class="muted" th:text="'(' + ${draft.stepsOrEmpty().size()} + ')'">(0)</span></h3>
+        <ol class="stack">
+            <li th:each="s : ${draft.stepsOrEmpty()}" th:text="${s}">step</li>
+        </ol>
+        <p class="muted" th:if="${draft.stepsOrEmpty().isEmpty()}">No steps found on the page.</p>
+
+        <form th:action="@{/recipes/import-url/commit}" method="post" class="stack" style="margin-top:16px;">
+            <input type="hidden" name="url" th:value="${draft.sourceUrl}">
+            <div class="field" style="max-width:280px;">
+                <label for="creator">Creator <span class="muted">(optional)</span></label>
+                <input type="text" id="creator" name="creator" placeholder="defaults to import:<site>">
+            </div>
+            <div class="actions">
+                <button type="submit" class="btn">Import this recipe →</button>
+            </div>
+            <p class="hint">Creates the recipe (tagged <code>source:imported</code>) and any missing ingredients.</p>
+        </form>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

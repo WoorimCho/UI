@@ -57,8 +57,9 @@ public class IngredientController {
 
     @PostMapping("/ingredients")
     public String create(@RequestParam String name,
-                         @RequestParam(required = false) String tags) {
-        var created = client.create(name.trim(), splitCsv(tags));
+                         @RequestParam(required = false) String tags,
+                         @RequestParam(required = false) Double densityGPerMl) {
+        var created = client.create(name.trim(), splitCsv(tags), densityGPerMl);
         return "redirect:/ingredients/" + created.id();
     }
 
@@ -73,8 +74,9 @@ public class IngredientController {
     @PostMapping("/ingredients/{id}")
     public String update(@PathVariable long id,
                          @RequestParam String name,
-                         @RequestParam(required = false) String tags) {
-        client.update(id, name.trim(), splitCsv(tags));
+                         @RequestParam(required = false) String tags,
+                         @RequestParam(required = false) Double densityGPerMl) {
+        client.update(id, name.trim(), splitCsv(tags), densityGPerMl);
         return "redirect:/ingredients/" + id;
     }
 

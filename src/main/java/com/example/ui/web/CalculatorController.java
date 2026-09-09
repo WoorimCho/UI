@@ -7,6 +7,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 /** The BFF calculators. Login-guarded by {@link com.example.ui.config.WebConfig}. */
 @Controller
@@ -60,5 +61,15 @@ public class CalculatorController {
         }
         model.addAttribute("scale", scale);
         return "calculators/portions";
+    }
+
+    /** JSON for the live portion slider — same data as the page, no re-render. */
+    @GetMapping("/recipes/{id}/portions.json")
+    @ResponseBody
+    public com.example.ui.client.BffClient.PortionResult portionsJson(
+            @PathVariable long id,
+            @RequestParam(defaultValue = "1") double scale,
+            HttpSession session) {
+        return bff.portions(id, Math.max(scale, 0.01), null, null, null, cookie(session));
     }
 }
