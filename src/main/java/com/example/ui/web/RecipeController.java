@@ -2,11 +2,13 @@ package com.example.ui.web;
 
 import com.example.ui.client.BffClient;
 import com.example.ui.client.IngredientClient;
+import com.example.ui.client.PageResult;
 import com.example.ui.client.RecipeClient;
 import com.example.ui.client.UserClient;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -14,14 +16,27 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 @Controller
 public class RecipeController {
+
+    /** UI field key -> catalogue sort property. Order is the sort-bar order. */
+    static final Map<String, String> SORTABLE = new LinkedHashMap<>();
+    static {
+        SORTABLE.put("name", "name");
+        SORTABLE.put("creator", "creator");
+        SORTABLE.put("version", "version");
+    }
+
+    /** How many recipes to pull for UI-side inherited-tag filtering before paginating locally. */
+    private static final int INHERITED_SCAN_LIMIT = 500;
 
     private final RecipeClient recipes;
     private final IngredientClient ingredients;
@@ -44,8 +59,14 @@ public class RecipeController {
                        @RequestParam(required = false, defaultValue = "all") String match,
                        @RequestParam(required = false) String notTag,
                        @RequestParam(required = false) String ingredient,
+                       @RequestParam(required = false) String sort,
+                       @RequestParam(required = false, defaultValue = "asc") String dir,
+                       @RequestParam(name = "inheritedTags", defaultValue = "false") boolean inheritedTags,
                        @RequestParam(defaultValue = "0") int page,
                        Model model) {
+        String sortQuery = Sorts.query(sort, dir, SORTABLE);
+        List<String> tagTerms = IngredientController.splitCsv(tag);
+        List<String> notTagTerms = IngredientController.splitCsv(notTag);
         List<String> ingredientNames = IngredientController.splitCsv(ingredient);
         List<Long> ids = ingredientNames.isEmpty()
                 ? List.of()
@@ -53,15 +74,101 @@ public class RecipeController {
         if (!ingredientNames.isEmpty() && ids.isEmpty()) {
             model.addAttribute("notice", "No ingredient matches \"" + ingredient + "\".");
         }
-        model.addAttribute("page", recipes.list(name, IngredientController.splitCsv(tag), match,
-                IngredientController.splitCsv(notTag), ids, page, 20));
+
+        boolean useInherited = inheritedTags && !(tagTerms.isEmpty() && notTagTerms.isEmpty());
+        PageResult<RecipeClient.Recipe> result = useInherited
+                ? filterByOwnAndInheritedTags(name, tagTerms, match, notTagTerms, ids, sortQuery, page, 20)
+                : recipes.list(name, tagTerms, match, notTagTerms, ids, sortQuery, page, 20);
+        model.addAttribute("page", result);
+
+        MultiValueMap<String, String> base = new LinkedMultiValueMap<>();
+        base.add("name", name);
+        base.add("tag", tag);
+        base.add("match", match);
+        base.add("notTag", notTag);
+        base.add("ingredient", ingredient);
+        if (inheritedTags) {
+            base.add("inheritedTags", "true");
+        }
+        model.addAttribute("sortLinks", Sorts.links("/recipes", base, sort, dir, SORTABLE.keySet()));
+        model.addAttribute("sortField", sort == null ? "" : sort);
+        model.addAttribute("sortDir", "desc".equalsIgnoreCase(dir) ? "desc" : "asc");
+
         model.addAttribute("name", name);
         model.addAttribute("tag", tag);
         model.addAttribute("match", match);
         model.addAttribute("notTag", notTag);
         model.addAttribute("ingredient", ingredient);
+        model.addAttribute("inheritedTags", inheritedTags);
         model.addAttribute("pageNo", page);
         return "recipes/list";
+    }
+
+    /**
+     * The catalogue only knows a recipe's own tags, so "vegan" won't drop a
+     * recipe that's vegan only through its ingredients. When the user asks for
+     * inherited tags to count, we fetch the name/ingredient-matching recipes,
+     * union each one's tags with its ingredients' tags, apply the tag / notTag
+     * terms here, and paginate the result locally.
+     */
+    private PageResult<RecipeClient.Recipe> filterByOwnAndInheritedTags(
+            String name, List<String> tagTerms, String match, List<String> notTagTerms,
+            List<Long> ingredientIds, String sortQuery, int page, int size) {
+
+        List<RecipeClient.Recipe> scanned = recipes
+                .list(name, List.of(), "all", List.of(), ingredientIds, sortQuery, 0, INHERITED_SCAN_LIMIT)
+                .contentOrEmpty();
+
+        Set<Long> ingIds = new LinkedHashSet<>();
+        scanned.forEach(r -> r.ingredientsOrEmpty().forEach(l -> ingIds.add(l.ingredientId())));
+        Map<Long, IngredientClient.Ingredient> resolved = ingIds.isEmpty()
+                ? Map.of() : ingredients.byIds(ingIds);
+
+        boolean matchAny = "any".equalsIgnoreCase(match);
+        List<RecipeClient.Recipe> kept = scanned.stream().filter(recipe -> {
+            Set<String> tags = new LinkedHashSet<>();
+            recipe.tagsOrEmpty().forEach(t -> addLower(tags, t.name()));
+            for (RecipeClient.Line line : recipe.ingredientsOrEmpty()) {
+                IngredientClient.Ingredient ing = resolved.get(line.ingredientId());
+                if (ing != null) {
+                    ing.tagsOrEmpty().forEach(t -> addLower(tags, t.name()));
+                }
+            }
+            return includes(tags, tagTerms, matchAny) && excludes(tags, notTagTerms);
+        }).toList();
+
+        int from = Math.min(page * size, kept.size());
+        int to = Math.min(from + size, kept.size());
+        List<RecipeClient.Recipe> slice = kept.subList(from, to);
+        int totalPages = Math.max(1, (int) Math.ceil(kept.size() / (double) size));
+        return new PageResult<>(slice, page, size, kept.size(), totalPages,
+                page == 0, page >= totalPages - 1, slice.size(), slice.isEmpty());
+    }
+
+    private static void addLower(Set<String> set, String s) {
+        if (s != null) {
+            set.add(s.toLowerCase(Locale.ROOT));
+        }
+    }
+
+    /** Every term (or any term, when {@code matchAny}) is a substring of some tag; empty terms => match. */
+    private static boolean includes(Set<String> tags, List<String> terms, boolean matchAny) {
+        if (terms.isEmpty()) {
+            return true;
+        }
+        return matchAny
+                ? terms.stream().anyMatch(term -> containsTerm(tags, term))
+                : terms.stream().allMatch(term -> containsTerm(tags, term));
+    }
+
+    /** No exclude term is a substring of any tag. */
+    private static boolean excludes(Set<String> tags, List<String> terms) {
+        return terms.stream().noneMatch(term -> containsTerm(tags, term));
+    }
+
+    private static boolean containsTerm(Set<String> tags, String term) {
+        String needle = term.trim().toLowerCase(Locale.ROOT);
+        return tags.stream().anyMatch(t -> t.contains(needle));
     }
 
     @GetMapping("/recipes/random")

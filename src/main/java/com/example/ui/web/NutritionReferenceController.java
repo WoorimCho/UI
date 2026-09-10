@@ -3,6 +3,8 @@ package com.example.ui.web;
 import com.example.ui.client.IngredientClient;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -17,6 +19,19 @@ import java.util.Map;
 @Controller
 public class NutritionReferenceController {
 
+    /** UI field key -> catalogue sort property. Order is the header order. */
+    static final Map<String, String> SORTABLE = new LinkedHashMap<>();
+    static {
+        SORTABLE.put("name", "name");
+        SORTABLE.put("kcal", "kcal");
+        SORTABLE.put("protein", "proteinG");
+        SORTABLE.put("carbs", "carbsG");
+        SORTABLE.put("fat", "fatG");
+        SORTABLE.put("fiber", "fiberG");
+        SORTABLE.put("sugar", "sugarG");
+        SORTABLE.put("sodium", "sodiumMg");
+    }
+
     private final IngredientClient client;
 
     public NutritionReferenceController(IngredientClient client) {
@@ -24,8 +39,18 @@ public class NutritionReferenceController {
     }
 
     @GetMapping("/nutrition-reference")
-    public String list(@RequestParam(required = false) String name, Model model) {
-        model.addAttribute("rows", client.nutritionReference(name));
+    public String list(@RequestParam(required = false) String name,
+                       @RequestParam(required = false) String sort,
+                       @RequestParam(required = false, defaultValue = "asc") String dir,
+                       Model model) {
+        String sortQuery = Sorts.query(sort, dir, SORTABLE);
+        model.addAttribute("rows", client.nutritionReference(name, sortQuery));
+
+        MultiValueMap<String, String> base = new LinkedMultiValueMap<>();
+        base.add("name", name);
+        model.addAttribute("sortLinks", Sorts.links("/nutrition-reference", base, sort, dir, SORTABLE.keySet()));
+        model.addAttribute("sortField", sort == null ? "" : sort);
+        model.addAttribute("sortDir", "desc".equalsIgnoreCase(dir) ? "desc" : "asc");
         model.addAttribute("name", name);
         return "nutrition-reference/list";
     }

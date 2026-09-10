@@ -25,6 +25,8 @@
         </select>
         <input type="search" name="notTag" th:value="${notTag}" placeholder="exclude tag(s)"
                data-suggest="/suggest/tags" style="max-width:180px;">
+        <input type="hidden" name="sort" th:value="${sortField}">
+        <input type="hidden" name="dir" th:value="${sortDir}">
         <button type="submit" class="btn btn-sm">Filter</button>
         <a class="btn btn-sm ghost" th:href="@{/ingredients}"
            th:if="${name != null or tag != null or notTag != null}">Clear</a>
@@ -37,12 +39,25 @@
         <p class="muted">No ingredients match.</p>
     </div>
 
-    <table class="table" th:unless="${page.contentOrEmpty().isEmpty()}">
+    <div style="overflow-x:auto;" th:unless="${page.contentOrEmpty().isEmpty()}">
+    <table class="table compact">
         <thead>
-        <tr><th>Name</th><th>Tags</th><th>Nutrition</th><th></th></tr>
+        <tr>
+            <th><a th:href="${sortLinks['name'].href}">Name</a><span th:text="${sortLinks['name'].arrow}"></span></th>
+            <th>Tags</th>
+            <th class="num"><a th:href="${sortLinks['kcal'].href}">kcal</a><span th:text="${sortLinks['kcal'].arrow}"></span></th>
+            <th class="num"><a th:href="${sortLinks['protein'].href}">Protein</a><span th:text="${sortLinks['protein'].arrow}"></span></th>
+            <th class="num"><a th:href="${sortLinks['carbs'].href}">Carbs</a><span th:text="${sortLinks['carbs'].arrow}"></span></th>
+            <th class="num"><a th:href="${sortLinks['fat'].href}">Fat</a><span th:text="${sortLinks['fat'].arrow}"></span></th>
+            <th class="num"><a th:href="${sortLinks['fiber'].href}">Fiber</a><span th:text="${sortLinks['fiber'].arrow}"></span></th>
+            <th class="num"><a th:href="${sortLinks['sugar'].href}">Sugar</a><span th:text="${sortLinks['sugar'].arrow}"></span></th>
+            <th class="num"><a th:href="${sortLinks['sodium'].href}">Sodium</a><span th:text="${sortLinks['sodium'].arrow}"></span></th>
+            <th class="num"><a th:href="${sortLinks['density'].href}">Density</a><span th:text="${sortLinks['density'].arrow}"></span></th>
+            <th></th>
+        </tr>
         </thead>
         <tbody>
-        <tr th:each="i : ${page.content}">
+        <tr th:each="i : ${page.content}" th:with="n=${i.nutrition}">
             <td><a th:href="@{/ingredients/{id}(id=${i.id})}" th:text="${i.name}">name</a></td>
             <td>
                 <div class="chips">
@@ -50,11 +65,14 @@
                     <span class="muted" th:if="${i.tagsOrEmpty().isEmpty()}">—</span>
                 </div>
             </td>
-            <td>
-                <span class="badge ok" th:if="${i.hasNutrition()}"
-                      th:text="${i.nutrition.kcal != null ? #numbers.formatDecimal(i.nutrition.kcal,1,0) + ' kcal/100g' : 'yes'}">yes</span>
-                <span class="badge muted" th:unless="${i.hasNutrition()}">none</span>
-            </td>
+            <td class="num" th:text="${n != null and n.kcal != null ? #numbers.formatDecimal(n.kcal,1,0) : '—'}">—</td>
+            <td class="num" th:text="${n != null and n.proteinG != null ? #numbers.formatDecimal(n.proteinG,1,1) : '—'}">—</td>
+            <td class="num" th:text="${n != null and n.carbsG != null ? #numbers.formatDecimal(n.carbsG,1,1) : '—'}">—</td>
+            <td class="num" th:text="${n != null and n.fatG != null ? #numbers.formatDecimal(n.fatG,1,1) : '—'}">—</td>
+            <td class="num" th:text="${n != null and n.fiberG != null ? #numbers.formatDecimal(n.fiberG,1,1) : '—'}">—</td>
+            <td class="num" th:text="${n != null and n.sugarG != null ? #numbers.formatDecimal(n.sugarG,1,1) : '—'}">—</td>
+            <td class="num" th:text="${n != null and n.sodiumMg != null ? #numbers.formatDecimal(n.sodiumMg,1,0) : '—'}">—</td>
+            <td class="num" th:text="${i.hasDensity() ? #numbers.formatDecimal(i.densityGPerMl,1,2) : '—'}">—</td>
             <td style="white-space:nowrap;">
                 <a class="btn btn-sm ghost" th:href="@{/ingredients/{id}/edit(id=${i.id})}">Edit</a>
                 <form th:action="@{/ingredients/{id}/delete(id=${i.id})}" method="post" style="display:inline;"
@@ -65,13 +83,17 @@
         </tr>
         </tbody>
     </table>
+    </div>
+    <p class="hint" th:unless="${page.contentOrEmpty().isEmpty()}">
+        Figures are per the ingredient's own basis grams (usually 100). Click a column to sort; click again to flip.
+        Ingredients with no figure sort to the end.</p>
 
     <div class="pagination" th:if="${page.totalPages > 1}">
         <a class="btn btn-sm ghost" th:if="${page.hasPrevious()}"
-           th:href="@{/ingredients(name=${name},tag=${tag},match=${match},notTag=${notTag},page=${pageNo - 1})}">← Prev</a>
+           th:href="@{/ingredients(name=${name},tag=${tag},match=${match},notTag=${notTag},sort=${sortField},dir=${sortDir},page=${pageNo - 1})}">← Prev</a>
         <span class="muted" th:text="'Page ' + (${pageNo} + 1) + ' of ' + ${page.totalPages}">Page 1</span>
         <a class="btn btn-sm ghost" th:if="${page.hasNext()}"
-           th:href="@{/ingredients(name=${name},tag=${tag},match=${match},notTag=${notTag},page=${pageNo + 1})}">Next →</a>
+           th:href="@{/ingredients(name=${name},tag=${tag},match=${match},notTag=${notTag},sort=${sortField},dir=${sortDir},page=${pageNo + 1})}">Next →</a>
     </div>
 </main>
 

@@ -14,6 +14,8 @@
 
     <form th:action="@{/nutrition-reference}" method="get" class="toolbar">
         <input type="search" name="name" th:value="${name}" placeholder="search a food…">
+        <input type="hidden" name="sort" th:value="${sortField}">
+        <input type="hidden" name="dir" th:value="${sortDir}">
         <button type="submit" class="btn btn-sm">Search</button>
         <a class="btn btn-sm ghost" th:href="@{/nutrition-reference}" th:if="${name}">Clear</a>
     </form>
@@ -21,8 +23,15 @@
     <table class="table compact">
         <thead>
         <tr>
-            <th>Food</th><th class="num">kcal</th><th class="num">Protein</th><th class="num">Carbs</th>
-            <th class="num">Fat</th><th class="num">Fiber</th><th class="num">Sugar</th><th class="num">Sodium</th><th></th>
+            <th><a th:href="${sortLinks['name'].href}">Food</a><span th:text="${sortLinks['name'].arrow}"></span></th>
+            <th class="num"><a th:href="${sortLinks['kcal'].href}">kcal</a><span th:text="${sortLinks['kcal'].arrow}"></span></th>
+            <th class="num"><a th:href="${sortLinks['protein'].href}">Protein</a><span th:text="${sortLinks['protein'].arrow}"></span></th>
+            <th class="num"><a th:href="${sortLinks['carbs'].href}">Carbs</a><span th:text="${sortLinks['carbs'].arrow}"></span></th>
+            <th class="num"><a th:href="${sortLinks['fat'].href}">Fat</a><span th:text="${sortLinks['fat'].arrow}"></span></th>
+            <th class="num"><a th:href="${sortLinks['fiber'].href}">Fiber</a><span th:text="${sortLinks['fiber'].arrow}"></span></th>
+            <th class="num"><a th:href="${sortLinks['sugar'].href}">Sugar</a><span th:text="${sortLinks['sugar'].arrow}"></span></th>
+            <th class="num"><a th:href="${sortLinks['sodium'].href}">Sodium</a><span th:text="${sortLinks['sodium'].arrow}"></span></th>
+            <th></th>
         </tr>
         </thead>
         <tbody>

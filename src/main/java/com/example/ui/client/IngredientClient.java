@@ -32,7 +32,7 @@ public class IngredientClient {
     // ── ingredients ──────────────────────────────────────────────────────────
 
     public PageResult<Ingredient> list(String name, List<String> tags, String match,
-                                      List<String> notTags, int page, int size) {
+                                      List<String> notTags, String sort, int page, int size) {
         return http.get().uri(uri -> {
             uri.path("/api/ingredients").queryParam("page", page).queryParam("size", size);
             if (StringUtils.hasText(name)) {
@@ -45,6 +45,9 @@ public class IngredientClient {
             if (notTags != null && !notTags.isEmpty()) {
                 uri.queryParam("notTag", notTags.toArray());
             }
+            if (StringUtils.hasText(sort)) {
+                uri.queryParam("sort", sort);
+            }
             return uri.build();
         }).retrieve().body(INGREDIENT_PAGE);
     }
@@ -54,7 +57,7 @@ public class IngredientClient {
         if (!StringUtils.hasText(name)) {
             return null;
         }
-        PageResult<Ingredient> hits = list(name.trim(), null, null, null, 0, 25);
+        PageResult<Ingredient> hits = list(name.trim(), null, null, null, null, 0, 25);
         return hits.contentOrEmpty().stream()
                 .filter(i -> i.name() != null && i.name().equalsIgnoreCase(name.trim()))
                 .findFirst()
@@ -208,11 +211,14 @@ public class IngredientClient {
                 .retrieve().body(ImportResult.class);
     }
 
-    public List<NutritionRef> nutritionReference(String name) {
+    public List<NutritionRef> nutritionReference(String name, String sort) {
         return http.get().uri(uri -> {
             uri.path("/api/nutrition-reference");
             if (StringUtils.hasText(name)) {
                 uri.queryParam("name", name);
+            }
+            if (StringUtils.hasText(sort)) {
+                uri.queryParam("sort", sort);
             }
             return uri.build();
         }).retrieve().body(NUTRITION_REF_LIST);

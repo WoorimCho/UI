@@ -25,7 +25,7 @@ public class RecipeClient {
     }
 
     public PageResult<Recipe> list(String name, List<String> tags, String match, List<String> notTags,
-                                   List<Long> ingredientIds, int page, int size) {
+                                   List<Long> ingredientIds, String sort, int page, int size) {
         return http.get().uri(uri -> {
             uri.path("/api/recipes").queryParam("page", page).queryParam("size", size);
             if (StringUtils.hasText(name)) {
@@ -40,6 +40,9 @@ public class RecipeClient {
             }
             if (ingredientIds != null && !ingredientIds.isEmpty()) {
                 uri.queryParam("ingredientId", ingredientIds.toArray());
+            }
+            if (StringUtils.hasText(sort)) {
+                uri.queryParam("sort", sort);
             }
             return uri.build();
         }).retrieve().body(RECIPE_PAGE);
@@ -73,7 +76,7 @@ public class RecipeClient {
 
     /** Recipe names containing {@code q} (for autocomplete). */
     public List<String> suggestNames(String q) {
-        return list(q, null, null, null, null, 0, 20).contentOrEmpty().stream()
+        return list(q, null, null, null, null, null, 0, 20).contentOrEmpty().stream()
                 .map(Recipe::name).distinct().toList();
     }
 
@@ -82,7 +85,7 @@ public class RecipeClient {
         if (!StringUtils.hasText(name)) {
             return null;
         }
-        return list(name.trim(), null, null, null, null, 0, 25).contentOrEmpty().stream()
+        return list(name.trim(), null, null, null, null, null, 0, 25).contentOrEmpty().stream()
                 .filter(r -> r.name() != null && r.name().equalsIgnoreCase(name.trim()))
                 .findFirst()
                 .orElse(null);

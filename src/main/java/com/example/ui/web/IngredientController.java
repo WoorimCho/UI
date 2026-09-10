@@ -4,6 +4,8 @@ import com.example.ui.client.IngredientClient;
 import com.example.ui.client.RecipeClient;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -19,6 +21,20 @@ import java.util.Map;
 @Controller
 public class IngredientController {
 
+    /** UI field key -> catalogue sort property. Order is the header order. */
+    static final Map<String, String> SORTABLE = new LinkedHashMap<>();
+    static {
+        SORTABLE.put("name", "name");
+        SORTABLE.put("kcal", "nutrition.kcal");
+        SORTABLE.put("protein", "nutrition.proteinG");
+        SORTABLE.put("carbs", "nutrition.carbsG");
+        SORTABLE.put("fat", "nutrition.fatG");
+        SORTABLE.put("fiber", "nutrition.fiberG");
+        SORTABLE.put("sugar", "nutrition.sugarG");
+        SORTABLE.put("sodium", "nutrition.sodiumMg");
+        SORTABLE.put("density", "densityGPerMl");
+    }
+
     private final IngredientClient client;
     private final RecipeClient recipes;
 
@@ -32,9 +48,22 @@ public class IngredientController {
                        @RequestParam(required = false) String tag,
                        @RequestParam(required = false, defaultValue = "all") String match,
                        @RequestParam(required = false) String notTag,
+                       @RequestParam(required = false) String sort,
+                       @RequestParam(required = false, defaultValue = "asc") String dir,
                        @RequestParam(defaultValue = "0") int page,
                        Model model) {
-        model.addAttribute("page", client.list(name, splitCsv(tag), match, splitCsv(notTag), page, 24));
+        String sortQuery = Sorts.query(sort, dir, SORTABLE);
+        model.addAttribute("page", client.list(name, splitCsv(tag), match, splitCsv(notTag), sortQuery, page, 24));
+
+        MultiValueMap<String, String> base = new LinkedMultiValueMap<>();
+        base.add("name", name);
+        base.add("tag", tag);
+        base.add("match", match);
+        base.add("notTag", notTag);
+        model.addAttribute("sortLinks", Sorts.links("/ingredients", base, sort, dir, SORTABLE.keySet()));
+        model.addAttribute("sortField", sort == null ? "" : sort);
+        model.addAttribute("sortDir", "desc".equalsIgnoreCase(dir) ? "desc" : "asc");
+
         model.addAttribute("name", name);
         model.addAttribute("tag", tag);
         model.addAttribute("match", match);
@@ -111,7 +140,7 @@ public class IngredientController {
         // that points at it. Block it here instead, with a count the user can act on.
         long usedBy = 0;
         try {
-            usedBy = recipes.list(null, null, "all", null, List.of(id), 0, 1).totalElements();
+            usedBy = recipes.list(null, null, "all", null, List.of(id), null, 0, 1).totalElements();
         } catch (RuntimeException ignored) {
             // recipe catalogue unreachable — fall through and let the delete proceed
         }

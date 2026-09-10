@@ -28,10 +28,10 @@ The UI keeps **its own `HttpSession`**. Login = User `POST /api/authenticate`
 |---|---|
 | `/` | dashboard (counts + tiles) |
 | `/login`, `/register`, `POST /logout` | auth |
-| `/ingredients` … `/ingredients/{id}` `/new` `/{id}/edit` `POST /{id}/nutrition` `POST /{id}/delete` | ingredient CRUD + nutrition + **density (g/ml)**; name search + autocomplete; filter by tag / **exclude tag** (substring); delete blocked when a recipe uses it |
+| `/ingredients` … `/ingredients/{id}` `/new` `/{id}/edit` `POST /{id}/nutrition` `POST /{id}/delete` | ingredient CRUD + nutrition + **density (g/ml)**; name search + autocomplete; filter by tag / **exclude tag** (substring); **click a column to sort** — name, each nutrient, density (empties last); delete blocked when a recipe uses it |
 | `/tags` `POST /tags` `POST /tags/{id}/delete` `POST /tags/merge` | tag browser (**substring search** — "vegan" finds "diet:vegan"); **merge by name or id** |
-| `/nutrition-reference` `POST /nutrition-reference` | browse + **add a food** |
-| `/recipes` … `/recipes/{id}` `/random` `/new` `/{id}/edit` `POST /{id}/delete` | recipe CRUD; dynamic step/ingredient form — ingredients & replacements are entered **by name** (autocomplete); filter by tag, **exclude tag** ("not vegan"), or "uses ingredient" (by name); "Surprise me" |
+| `/nutrition-reference` `POST /nutrition-reference` | browse (**click a column to sort** — food, each nutrient) + **add a food** |
+| `/recipes` … `/recipes/{id}` `/random` `/new` `/{id}/edit` `POST /{id}/delete` | recipe CRUD; dynamic step/ingredient form — ingredients & replacements entered **by name** (autocomplete); filter by tag, **exclude tag** ("not vegan"), or "uses ingredient" (by name); **"include ingredient tags"** widens tag matching to each recipe's inherited tags; sort by name / creator / version; "Surprise me" |
 | `/recipes/import-url` `POST …/preview` `POST …/commit` | **import a recipe from a URL** (via the `recipe-crawler` service): preview the parsed draft, then create it |
 | `/recipes/crawl` `POST /recipes/crawl` | **crawl a site** from seed URLs — same-host link-following, robots.txt + rate-limited, bulk import; dry-run option |
 | `/recipes/{id}/nutrition` `/calories` `/portions` `/portions.json` | calculators (login-gated) — total / per-serving / **per 100 g** / **per gram**; nutrition shows a **weight ⇄ volume** column; portions has a **live batch-size slider**, an *as-written / grams / ml / **US volume** (cups, tbsp)* toggle, a **Calories** column and a live **Batch ≈ N g · N kcal** total; "scale from one line" takes the anchor ingredient **by name** and bridges volume↔weight via density |

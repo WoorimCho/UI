@@ -24,9 +24,15 @@
                data-suggest="/suggest/tags" style="max-width:180px;">
         <input type="text" name="ingredient" th:value="${ingredient}" placeholder="uses ingredient…"
                data-suggest="/suggest/ingredients" style="max-width:170px;">
+        <label class="muted" style="display:inline-flex;align-items:center;gap:6px;white-space:nowrap;">
+            <input type="checkbox" name="inheritedTags" value="true" th:checked="${inheritedTags}">
+            include ingredient tags
+        </label>
+        <input type="hidden" name="sort" th:value="${sortField}">
+        <input type="hidden" name="dir" th:value="${sortDir}">
         <button type="submit" class="btn btn-sm">Search</button>
         <a class="btn btn-sm ghost" th:href="@{/recipes}"
-           th:if="${name != null or tag != null or notTag != null or ingredient != null}">Clear</a>
+           th:if="${name != null or tag != null or notTag != null or ingredient != null or inheritedTags}">Clear</a>
         <span class="spacer"></span>
         <a class="btn btn-sm mint"
            th:href="@{/recipes/random(name=${name},tag=${tag},match=${match},notTag=${notTag})}">🎲 Surprise me</a>
@@ -34,6 +40,16 @@
         <a class="btn btn-sm ghost" th:href="@{/recipes/import-url}">🌐 Import from URL</a>
         <a class="btn btn-sm" th:href="@{/recipes/new}">➕ New recipe</a>
     </form>
+
+    <p class="muted" th:if="${inheritedTags}" style="margin:-4px 0 10px;">
+        Tag filters also match tags inherited from each recipe's ingredients.</p>
+
+    <div class="toolbar" th:unless="${page.contentOrEmpty().isEmpty()}" style="gap:6px;">
+        <span class="muted">Sort:</span>
+        <a class="btn btn-sm ghost" th:href="${sortLinks['name'].href}">Name<span th:text="${sortLinks['name'].arrow}"></span></a>
+        <a class="btn btn-sm ghost" th:href="${sortLinks['creator'].href}">Creator<span th:text="${sortLinks['creator'].arrow}"></span></a>
+        <a class="btn btn-sm ghost" th:href="${sortLinks['version'].href}">Version<span th:text="${sortLinks['version'].arrow}"></span></a>
+    </div>
 
     <div class="grid" th:unless="${page.contentOrEmpty().isEmpty()}">
         <a class="tile" th:each="r : ${page.content}" th:href="@{/recipes/{id}(id=${r.id})}">
@@ -48,10 +64,10 @@
 
     <div class="pagination" th:if="${page.totalPages > 1}">
         <a class="btn btn-sm ghost" th:if="${page.hasPrevious()}"
-           th:href="@{/recipes(name=${name},tag=${tag},match=${match},notTag=${notTag},ingredient=${ingredient},page=${pageNo - 1})}">← Prev</a>
+           th:href="@{/recipes(name=${name},tag=${tag},match=${match},notTag=${notTag},ingredient=${ingredient},inheritedTags=${inheritedTags},sort=${sortField},dir=${sortDir},page=${pageNo - 1})}">← Prev</a>
         <span class="muted" th:text="'Page ' + (${pageNo} + 1) + ' of ' + ${page.totalPages}"></span>
         <a class="btn btn-sm ghost" th:if="${page.hasNext()}"
-           th:href="@{/recipes(name=${name},tag=${tag},match=${match},notTag=${notTag},ingredient=${ingredient},page=${pageNo + 1})}">Next →</a>
+           th:href="@{/recipes(name=${name},tag=${tag},match=${match},notTag=${notTag},ingredient=${ingredient},inheritedTags=${inheritedTags},sort=${sortField},dir=${sortDir},page=${pageNo + 1})}">Next →</a>
     </div>
 </main>
 
