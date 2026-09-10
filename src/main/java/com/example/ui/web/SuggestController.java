@@ -32,7 +32,7 @@ public class SuggestController {
 
     @GetMapping("/suggest/ingredients")
     public List<String> ingredientNames(@RequestParam(name = "q", required = false) String q) {
-        return safe(() -> ingredients.list(q, null, null, 0, 20)
+        return safe(() -> ingredients.list(q, null, null, null, 0, 20)
                 .contentOrEmpty().stream().map(IngredientClient.Ingredient::name).toList());
     }
 

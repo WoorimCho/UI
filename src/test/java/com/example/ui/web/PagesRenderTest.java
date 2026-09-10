@@ -46,7 +46,7 @@ class PagesRenderTest {
 
     @Test
     void homeRenders() throws Exception {
-        when(ingredients.list(any(), any(), any(), anyInt(), anyInt())).thenReturn(emptyPage());
+        when(ingredients.list(any(), any(), any(), any(), anyInt(), anyInt())).thenReturn(emptyPage());
         when(recipes.list(any(), any(), any(), any(), any(), anyInt(), anyInt())).thenReturn(emptyPage());
 
         mvc.perform(get("/"))
@@ -63,7 +63,7 @@ class PagesRenderTest {
 
     @Test
     void ingredientListRenders() throws Exception {
-        when(ingredients.list(any(), any(), any(), anyInt(), anyInt())).thenReturn(emptyPage());
+        when(ingredients.list(any(), any(), any(), any(), anyInt(), anyInt())).thenReturn(emptyPage());
         mvc.perform(get("/ingredients"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Ingredients")));

@@ -31,13 +31,14 @@ public class IngredientController {
     public String list(@RequestParam(required = false) String name,
                        @RequestParam(required = false) String tag,
                        @RequestParam(required = false, defaultValue = "all") String match,
+                       @RequestParam(required = false) String notTag,
                        @RequestParam(defaultValue = "0") int page,
                        Model model) {
-        List<String> tags = splitCsv(tag);
-        model.addAttribute("page", client.list(name, tags, match, page, 24));
+        model.addAttribute("page", client.list(name, splitCsv(tag), match, splitCsv(notTag), page, 24));
         model.addAttribute("name", name);
         model.addAttribute("tag", tag);
         model.addAttribute("match", match);
+        model.addAttribute("notTag", notTag);
         model.addAttribute("pageNo", page);
         return "ingredients/list";
     }

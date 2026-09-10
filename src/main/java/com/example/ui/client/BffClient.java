@@ -200,11 +200,12 @@ public class BffClient {
 
     public record ScaledLine(
             Long ingredientId, String name, Double originalAmount, String unit,
-            Double scaledAmount, Double scaledGrams, Double scaledMillilitres,
+            Double scaledAmount, Double scaledGrams, Double scaledMillilitres, Double scaledKcal,
             String quantityText, boolean scaled) {
     }
 
-    public record PortionResult(Long recipeId, String recipeName, double scale, List<ScaledLine> lines) {
+    public record PortionResult(Long recipeId, String recipeName, double scale, List<ScaledLine> lines,
+                                Double totalGrams, Double totalKcal) {
         public List<ScaledLine> linesOrEmpty() {
             return lines == null ? List.of() : lines;
         }

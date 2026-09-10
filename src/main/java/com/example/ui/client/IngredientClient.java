@@ -31,7 +31,8 @@ public class IngredientClient {
 
     // ── ingredients ──────────────────────────────────────────────────────────
 
-    public PageResult<Ingredient> list(String name, List<String> tags, String match, int page, int size) {
+    public PageResult<Ingredient> list(String name, List<String> tags, String match,
+                                      List<String> notTags, int page, int size) {
         return http.get().uri(uri -> {
             uri.path("/api/ingredients").queryParam("page", page).queryParam("size", size);
             if (StringUtils.hasText(name)) {
@@ -40,6 +41,9 @@ public class IngredientClient {
             if (tags != null && !tags.isEmpty()) {
                 uri.queryParam("tag", tags.toArray());
                 uri.queryParam("match", StringUtils.hasText(match) ? match : "all");
+            }
+            if (notTags != null && !notTags.isEmpty()) {
+                uri.queryParam("notTag", notTags.toArray());
             }
             return uri.build();
         }).retrieve().body(INGREDIENT_PAGE);
@@ -50,7 +54,7 @@ public class IngredientClient {
         if (!StringUtils.hasText(name)) {
             return null;
         }
-        PageResult<Ingredient> hits = list(name.trim(), null, null, 0, 25);
+        PageResult<Ingredient> hits = list(name.trim(), null, null, null, 0, 25);
         return hits.contentOrEmpty().stream()
                 .filter(i -> i.name() != null && i.name().equalsIgnoreCase(name.trim()))
                 .findFirst()

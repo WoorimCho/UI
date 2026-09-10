@@ -73,10 +73,27 @@ public class CalculatorController {
 
         boolean asked = scale != null || anchorIngredientId != null || anchorAmount != null;
         if (asked) {
-            model.addAttribute("result",
-                    bff.portions(id, scale, anchorIngredientId, anchorAmount, anchorUnit, cookie(session)));
+            BffClient.PortionResult result =
+                    bff.portions(id, scale, anchorIngredientId, anchorAmount, anchorUnit, cookie(session));
+            model.addAttribute("result", result);
+            model.addAttribute("batchTotals", batchTotals(result));
         }
         return "calculators/portions";
+    }
+
+    /** "Batch ≈ 1,346 g · 1,929 kcal" — whichever the recipe could weigh; blank if neither. */
+    private static String batchTotals(BffClient.PortionResult r) {
+        StringBuilder sb = new StringBuilder();
+        if (r.totalGrams() != null) {
+            sb.append(String.format("%,d g", Math.round(r.totalGrams())));
+        }
+        if (r.totalKcal() != null) {
+            if (sb.length() > 0) {
+                sb.append(" · ");
+            }
+            sb.append(String.format("%,d kcal", Math.round(r.totalKcal())));
+        }
+        return sb.length() == 0 ? "" : "Batch ≈ " + sb;
     }
 
     /** JSON for the live portion slider — same data as the page, no re-render. */

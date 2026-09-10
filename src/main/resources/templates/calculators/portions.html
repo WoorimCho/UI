@@ -41,23 +41,26 @@
 
     <div class="card">
         <h2 id="resultHead" th:text="${result != null ? ('Scaled ×' + #numbers.formatDecimal(result.scale,1,2) + ' — ' + result.recipeName) : 'Scaled'}">Scaled</h2>
+        <p class="hint" id="batchTotals" th:text="${batchTotals}">Batch ≈</p>
         <table class="table compact">
-            <thead><tr><th>Ingredient</th><th class="num">Original</th><th class="num">Scaled</th></tr></thead>
+            <thead><tr><th>Ingredient</th><th class="num">Original</th><th class="num">Scaled</th><th class="num">Calories</th></tr></thead>
             <tbody id="rows">
             <tr th:each="l : ${result != null ? result.linesOrEmpty() : #lists.toList({})}"
-                th:attr="data-g=${l.scaledGrams},data-ml=${l.scaledMillilitres},data-as=${l.scaled ? (#numbers.formatDecimal(l.scaledAmount,1,1) + ' ' + l.unit) : (l.quantityText ?: '')}">
+                th:attr="data-g=${l.scaledGrams},data-ml=${l.scaledMillilitres},data-kcal=${l.scaledKcal},data-as=${l.scaled ? (#numbers.formatDecimal(l.scaledAmount,1,1) + ' ' + l.unit) : (l.quantityText ?: '')}">
                 <td th:text="${l.name}">name</td>
                 <td class="num" th:text="${l.originalAmount != null ? #numbers.formatDecimal(l.originalAmount,1,1) + ' ' + l.unit : (l.quantityText ?: '—')}">—</td>
                 <td class="num cell-scaled">
                     <strong th:if="${l.scaled}" th:text="${#numbers.formatDecimal(l.scaledAmount,1,1)} + ' ' + ${l.unit}">x</strong>
                     <span class="muted" th:unless="${l.scaled}" th:text="${l.quantityText ?: '(free text — not scaled)'}">—</span>
                 </td>
+                <td class="num cell-kcal"
+                    th:text="${l.scaledKcal != null ? #numbers.formatInteger(l.scaledKcal,1,'COMMA') + ' kcal' : '—'}">—</td>
             </tr>
             </tbody>
         </table>
-        <p class="hint">Grams / millilitres / US volume appear only for lines whose ingredient has a
-            density (set one on the ingredient, or it's a common food we recognise). US volume is a
-            friendly kitchen measure — cups when it's a cupful or more, otherwise tbsp, then tsp.</p>
+        <p class="hint">Grams / millilitres / US volume and calories appear only for lines whose ingredient
+            has a density and nutrition (set them on the ingredient, or it's a common food we recognise).
+            US volume is a friendly kitchen measure — cups when it's a cupful or more, otherwise tbsp, then tsp.</p>
     </div>
 
     <div class="card">
@@ -93,9 +96,12 @@
     const label = document.getElementById('scaleLabel');
     const rows = document.getElementById('rows');
     const head = document.getElementById('resultHead');
+    const totals = document.getElementById('batchTotals');
     const toggle = document.getElementById('unitToggle');
     let view = 'as';
     let timer = null;
+
+    function grp(n) { return Math.round(n).toLocaleString('en-US'); }
 
     const ML_PER_CUP = 236.588, ML_PER_TBSP = 14.7868, ML_PER_TSP = 4.92892;
 
@@ -132,19 +138,30 @@
         });
     }
 
+    function renderTotals(data) {
+        if (!totals) return;
+        const parts = [];
+        if (data.totalGrams != null) parts.push(grp(data.totalGrams) + ' g');
+        if (data.totalKcal != null) parts.push(grp(data.totalKcal) + ' kcal');
+        totals.textContent = parts.length ? 'Batch ≈ ' + parts.join(' · ') : '';
+    }
+
     function render(data) {
         head.textContent = 'Scaled ×' + (Math.round(data.scale * 100) / 100) + ' — ' + data.recipeName;
+        renderTotals(data);
         rows.innerHTML = '';
         (data.lines || []).forEach(function (l) {
             const tr = document.createElement('tr');
             const asText = l.scaled ? (fmt(l.scaledAmount) + ' ' + l.unit) : (l.quantityText || '');
             tr.setAttribute('data-g', l.scaledGrams == null ? 'null' : l.scaledGrams);
             tr.setAttribute('data-ml', l.scaledMillilitres == null ? 'null' : l.scaledMillilitres);
+            tr.setAttribute('data-kcal', l.scaledKcal == null ? 'null' : l.scaledKcal);
             tr.setAttribute('data-as', asText);
             const orig = l.originalAmount != null ? (fmt(l.originalAmount) + ' ' + l.unit) : (l.quantityText || '—');
-            tr.innerHTML = '<td></td><td class="num"></td><td class="num cell-scaled"></td>';
+            tr.innerHTML = '<td></td><td class="num"></td><td class="num cell-scaled"></td><td class="num cell-kcal"></td>';
             tr.children[0].textContent = l.name;
             tr.children[1].textContent = orig;
+            tr.children[3].textContent = l.scaledKcal == null ? '—' : grp(l.scaledKcal) + ' kcal';
             rows.appendChild(tr);
         });
         applyView();

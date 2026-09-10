@@ -9,6 +9,9 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.ResourceAccessException;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 /**
  * Renders a friendly page when a downstream call fails, instead of a stack
  * trace. Pulls the RFC 9457 {@code detail} out of the problem body when there
@@ -51,16 +54,19 @@ public class UiExceptionHandler {
         return "error";
     }
 
+    // "detail": "…"  — value may contain escaped quotes / backslashes.
+    private static final Pattern DETAIL = Pattern.compile("\"detail\"\\s*:\\s*\"((?:\\\\.|[^\"\\\\])*)\"");
+
     private static String extractDetail(RestClientResponseException ex) {
         try {
             String body = ex.getResponseBodyAsString();
-            if (body != null && body.contains("\"detail\"")) {
-                int i = body.indexOf("\"detail\"");
-                int colon = body.indexOf(':', i);
-                int start = body.indexOf('"', colon + 1);
-                int end = body.indexOf('"', start + 1);
-                if (start > 0 && end > start) {
-                    return body.substring(start + 1, end);
+            if (body != null) {
+                Matcher m = DETAIL.matcher(body);
+                if (m.find()) {
+                    return m.group(1)
+                            .replace("\\\"", "\"")
+                            .replace("\\n", " ")
+                            .replace("\\\\", "\\");
                 }
             }
         } catch (RuntimeException ignored) {
