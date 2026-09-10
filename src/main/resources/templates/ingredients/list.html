@@ -14,17 +14,15 @@
 
     <form th:action="@{/ingredients}" method="get" class="toolbar">
         <input type="search" name="name" th:value="${name}" placeholder="name contains…"
-               style="max-width:220px;" data-suggest="/suggest/ingredients">
-        <div class="field" style="margin:0;">
-            <input type="search" name="tag" th:value="${tag}" placeholder="tag(s), comma-separated — e.g. vegan, nut-free"
-                   data-suggest="/suggest/tags">
-        </div>
-        <select name="match">
+               style="max-width:200px;" data-suggest="/suggest/ingredients">
+        <input type="text" name="tag" th:value="${tag}" placeholder="tags… e.g. vegan, nut-free"
+               data-tokens="/suggest/tags">
+        <select name="match" style="max-width:120px;">
             <option value="all" th:selected="${match == 'all'}">match all</option>
             <option value="any" th:selected="${match == 'any'}">match any</option>
         </select>
-        <input type="search" name="notTag" th:value="${notTag}" placeholder="exclude tag(s)"
-               data-suggest="/suggest/tags" style="max-width:180px;">
+        <input type="text" name="notTag" th:value="${notTag}" placeholder="exclude tags…"
+               data-tokens="/suggest/tags">
         <input type="hidden" name="sort" th:value="${sortField}">
         <input type="hidden" name="dir" th:value="${sortDir}">
         <button type="submit" class="btn btn-sm">Filter</button>

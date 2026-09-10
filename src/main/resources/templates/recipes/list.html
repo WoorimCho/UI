@@ -13,17 +13,15 @@
     <div class="alert" th:if="${notice}" th:text="${notice}"></div>
 
     <form th:action="@{/recipes}" method="get" class="toolbar">
-        <input type="search" name="name" th:value="${name}" placeholder="name contains…">
-        <input type="text" name="tag" th:value="${tag}" placeholder="tag(s), comma-separated"
-               data-suggest="/suggest/tags" style="max-width:200px;">
-        <select name="match">
+        <input type="search" name="name" th:value="${name}" placeholder="name contains…" style="max-width:200px;">
+        <input type="text" name="tag" th:value="${tag}" placeholder="tags…" data-tokens="/suggest/tags">
+        <select name="match" style="max-width:90px;">
             <option value="all" th:selected="${match == 'all'}">all</option>
             <option value="any" th:selected="${match == 'any'}">any</option>
         </select>
-        <input type="text" name="notTag" th:value="${notTag}" placeholder="exclude tag(s)"
-               data-suggest="/suggest/tags" style="max-width:180px;">
+        <input type="text" name="notTag" th:value="${notTag}" placeholder="exclude tags…" data-tokens="/suggest/tags">
         <input type="text" name="ingredient" th:value="${ingredient}" placeholder="uses ingredient…"
-               data-suggest="/suggest/ingredients" style="max-width:170px;">
+               data-tokens="/suggest/ingredients">
         <label class="muted" style="display:inline-flex;align-items:center;gap:6px;white-space:nowrap;">
             <input type="checkbox" name="inheritedTags" value="true" th:checked="${inheritedTags}">
             include ingredient tags

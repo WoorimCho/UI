@@ -40,10 +40,18 @@ The UI keeps **its own `HttpSession`**. Login = User `POST /api/authenticate`
 | `/suggest/{tags,ingredients,recipes}` | JSON, backs the `<datalist>` autocompletes |
 | `POST /settings/theme` | writes the `ui.theme` cookie |
 
+**Token fields** (`static/js/tokens.js`): the tag / exclude-tag / uses-ingredient
+filters on the recipe and ingredient lists are chip inputs — pick from the
+autocomplete (or Enter / comma) to add a removable chip; the typing area never
+holds separators, so the search keeps working as you add more. Progressive
+enhancement: the underlying `<input>` still carries the comma-joined value, so
+without JS it's a plain text field and the server is unchanged.
+
 **Themes:** four light presets — Cherry Blossom 🌸, Blueberry 🫐, Matcha 🍵,
 Lavender 🪻 — as `[data-theme]` blocks in `static/css/app.css`. Chosen on the
 profile page, stored in a year-long `ui.theme` cookie, applied before first
-paint by a `<head>` script; the brand emoji tracks the theme.
+paint by a `<head>` script; the brand emoji tracks the theme (nav *and* the home
+heading).
 
 ## Run
 

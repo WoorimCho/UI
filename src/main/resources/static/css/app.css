@@ -153,6 +153,32 @@ button.link:hover { background: var(--pink-100); color: var(--pink-600); }
 .badge.danger { background: #F8D7E1; color: var(--danger); }
 .badge.muted { background: #EEE7EB; color: var(--plum-soft); }
 
+/* ── token / chip multi-select (tokens.js) ───────────────── */
+.tokenfield {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+    min-width: 200px; flex: 1 1 220px; max-width: 340px;
+    padding: 5px 8px; border: 2px solid var(--pink-200); border-radius: 11px;
+    background: #fff; cursor: text; transition: border-color .15s, box-shadow .15s;
+}
+.tokenfield:focus-within { border-color: var(--pink-500); box-shadow: 0 0 0 3px rgba(var(--glow), .18); }
+.token {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 4px 3px 10px; border-radius: 999px; font-size: 13px; font-weight: 600;
+    background: var(--pink-100); color: var(--pink-600); border: 1px solid var(--pink-200);
+    max-width: 100%;
+}
+.token-x {
+    border: none; cursor: pointer; font: inherit; line-height: 1;
+    width: 18px; height: 18px; border-radius: 999px; padding: 0;
+    background: var(--pink-200); color: var(--pink-600); font-weight: 700;
+}
+.token-x:hover { background: var(--pink-400); color: #fff; }
+.tokenfield-entry {
+    flex: 1 1 60px; min-width: 60px; width: auto;
+    border: none !important; outline: none; padding: 4px 2px !important;
+    background: transparent; box-shadow: none !important;
+}
+
 /* ── tables ──────────────────────────────────────────────── */
 table.table { width: 100%; border-collapse: separate; border-spacing: 0; }
 .table thead { background: linear-gradient(135deg, var(--pink-300), var(--pink-200)); }
