@@ -12,6 +12,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Import recipes via the recipe-crawler service:
@@ -106,11 +108,23 @@ public class ImportUrlController {
         return "recipes/crawl";
     }
 
+    // "detail": "…"  — the crawler's problem responses carry a user-facing sentence.
+    private static final Pattern DETAIL = Pattern.compile("\"detail\"\\s*:\\s*\"((?:\\\\.|[^\"\\\\])*)\"");
+
     private static String explain(RestClientResponseException e) {
+        Matcher m = DETAIL.matcher(e.getResponseBodyAsString());
+        if (m.find()) {
+            String detail = m.group(1).replace("\\\"", "\"").replace("\\n", " ").replace("\\\\", "\\");
+            if (StringUtils.hasText(detail)) {
+                return detail.substring(0, 1).toUpperCase() + detail.substring(1)
+                        + (detail.endsWith(".") ? "" : ".");
+            }
+        }
         int code = e.getStatusCode().value();
         return switch (code) {
-            case 422 -> "That page has no machine-readable recipe (no schema.org/JSON-LD Recipe).";
-            case 403 -> "robots.txt on that site disallows fetching this URL.";
+            case 422 -> "That page has no machine-readable recipe (no schema.org / JSON-LD Recipe).";
+            case 403 -> "That site doesn't allow automated fetching of this page.";
+            case 404 -> "That page wasn't found.";
             case 400 -> "That doesn't look like a valid http(s) recipe URL.";
             case 502, 503, 504 -> "Couldn't reach the page or a catalogue service. Try again.";
             default -> "Import failed (HTTP " + code + ").";
