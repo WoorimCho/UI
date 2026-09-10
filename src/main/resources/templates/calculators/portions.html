@@ -18,12 +18,12 @@
             <div class="field">
                 <label>Batch size — <strong id="scaleLabel">×1</strong></label>
                 <input type="range" id="scaleRange" min="0.25" max="4" step="0.25"
-                       th:value="${scale != null ? scale : 1}" style="width:100%;">
+                       th:value="${result != null ? result.scale : (scale != null ? scale : 1)}" style="width:100%;">
                 <div class="row3" style="margin-top:8px;">
                     <div class="field" style="max-width:160px;">
                         <label>exact multiplier</label>
                         <input type="number" id="scaleNum" step="0.05" min="0.05"
-                               th:value="${scale != null ? scale : 1}">
+                               th:value="${result != null ? result.scale : (scale != null ? scale : 1)}">
                     </div>
                     <div class="field">
                         <label>show amounts as</label>
@@ -91,6 +91,9 @@
 <script th:inline="javascript">
 (function () {
     const recipeId = /*[[${recipeId}]]*/ 0;
+    // when the page was rendered from a "scale from one line" / ?scale= request the
+    // server already built the table for this factor — don't re-fetch ×1 over it.
+    const serverScale = /*[[${result != null ? result.scale : null}]]*/ null;
     const range = document.getElementById('scaleRange');
     const num = document.getElementById('scaleNum');
     const label = document.getElementById('scaleLabel');
@@ -177,9 +180,11 @@
 
     function onScale(v, from) {
         v = Math.max(parseFloat(v) || 1, 0.05);
-        label.textContent = '×' + v;
+        const shown = Math.round(v * 100) / 100;
+        label.textContent = '×' + shown;
         if (from !== 'range' && v >= 0.25 && v <= 4) range.value = v;
-        if (from !== 'num') num.value = v;
+        if (from !== 'num') num.value = shown;
+        if (from === 'server') return;      // the table is already the server's render for this v
         clearTimeout(timer);
         timer = setTimeout(function () { fetchScaled(v); }, 180);
     }
@@ -194,8 +199,13 @@
         applyView();
     });
 
-    // populate on load (covers the no-?scale first visit)
-    onScale(num ? num.value : 1, 'init');
+    // on load: sync the controls to the server's factor without re-fetching;
+    // on a bare first visit (no result yet) fetch ×1 to fill the table.
+    if (serverScale != null) {
+        onScale(serverScale, 'server');
+    } else {
+        onScale(num ? num.value : 1, 'init');
+    }
 })();
 </script>
 
