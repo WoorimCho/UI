@@ -8,8 +8,10 @@
     <div class="page-head">
         <h1>⚖️ Portions</h1>
         <p class="muted">Drag the slider to resize the batch — every line amount scales with it.
-            Switch the amount column between how it's written, grams, and millilitres.</p>
+            Switch the amount column between how it's written, grams, millilitres, or US cups/tbsp.</p>
     </div>
+
+    <div class="alert error" th:if="${error}" th:text="${error}"></div>
 
     <div class="card" th:attr="data-recipe-id=${recipeId}">
         <div class="stack">
@@ -29,6 +31,7 @@
                             <button type="button" class="chip is-on" data-view="as">as written</button>
                             <button type="button" class="chip" data-view="g">grams</button>
                             <button type="button" class="chip" data-view="ml">millilitres</button>
+                            <button type="button" class="chip" data-view="us">US volume</button>
                         </div>
                     </div>
                 </div>
@@ -52,8 +55,9 @@
             </tr>
             </tbody>
         </table>
-        <p class="hint">Grams / millilitres appear only for lines whose ingredient has a density
-            (set one on the ingredient, or it's a common food we recognise).</p>
+        <p class="hint">Grams / millilitres / US volume appear only for lines whose ingredient has a
+            density (set one on the ingredient, or it's a common food we recognise). US volume is a
+            friendly kitchen measure — cups when it's a cupful or more, otherwise tbsp, then tsp.</p>
     </div>
 
     <div class="card">
@@ -61,7 +65,9 @@
         <p class="muted">“I want to use exactly this much of one ingredient.”</p>
         <form th:action="@{/recipes/{id}/portions(id=${recipeId})}" method="get" class="stack">
             <div class="row3">
-                <div class="field"><label>Anchor ingredient id</label><input type="number" name="anchorIngredientId"></div>
+                <div class="field"><label>Anchor ingredient</label>
+                    <input type="text" name="anchorIngredientName" th:value="${anchorIngredientName}"
+                           data-suggest="/suggest/ingredients" placeholder="rolled oats"></div>
                 <div class="field"><label>I want this amount</label><input type="number" step="any" name="anchorAmount"></div>
                 <div class="field"><label>in this unit</label>
                     <select name="anchorUnit">
@@ -91,7 +97,22 @@
     let view = 'as';
     let timer = null;
 
+    const ML_PER_CUP = 236.588, ML_PER_TBSP = 14.7868, ML_PER_TSP = 4.92892;
+
     function fmt(n) { return (Math.round(n * 10) / 10).toString(); }
+
+    // A friendly US kitchen measure from millilitres: cups (to the nearest ¼)
+    // once it's ~a cupful, otherwise tbsp (to the nearest ½), otherwise tsp.
+    function prettyUS(ml) {
+        if (ml >= ML_PER_CUP * 0.95) {
+            const cups = Math.round(ml / ML_PER_CUP * 4) / 4;
+            return cups + (cups === 1 ? ' cup' : ' cups');
+        }
+        if (ml >= ML_PER_TBSP) {
+            return (Math.round(ml / ML_PER_TBSP * 2) / 2) + ' tbsp';
+        }
+        return (Math.round(ml / ML_PER_TSP * 2) / 2) + ' tsp';
+    }
 
     function applyView() {
         rows.querySelectorAll('tr').forEach(function (tr) {
@@ -103,6 +124,7 @@
             let out;
             if (view === 'g') out = (g && g !== 'null') ? fmt(parseFloat(g)) + ' g' : '—';
             else if (view === 'ml') out = (ml && ml !== 'null') ? fmt(parseFloat(ml)) + ' ml' : '—';
+            else if (view === 'us') out = (ml && ml !== 'null') ? prettyUS(parseFloat(ml)) : '—';
             else out = as || '—';
             cell.innerHTML = as || view !== 'as'
                 ? '<strong>' + out + '</strong>'

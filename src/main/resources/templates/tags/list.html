@@ -13,10 +13,10 @@
     <div th:replace="~{fragments/layout :: flash}"></div>
 
     <form th:action="@{/tags}" method="get" class="toolbar">
-        <input type="search" name="prefix" th:value="${prefix}" placeholder="name starts with…"
+        <input type="search" name="prefix" th:value="${prefix}" placeholder="name contains…"
                data-suggest="/suggest/tags">
         <input type="text" name="namespace" th:value="${namespace}" placeholder="namespace" style="max-width:180px;">
-        <button type="submit" class="btn btn-sm">Filter</button>
+        <button type="submit" class="btn btn-sm">Search</button>
         <a class="btn btn-sm ghost" th:href="@{/tags}" th:if="${prefix != null or namespace != null}">Clear</a>
     </form>
 

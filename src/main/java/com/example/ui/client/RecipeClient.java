@@ -24,7 +24,7 @@ public class RecipeClient {
         this.http = recipeCatalogueRestClient;
     }
 
-    public PageResult<Recipe> list(String name, List<String> tags, String match,
+    public PageResult<Recipe> list(String name, List<String> tags, String match, List<String> notTags,
                                    List<Long> ingredientIds, int page, int size) {
         return http.get().uri(uri -> {
             uri.path("/api/recipes").queryParam("page", page).queryParam("size", size);
@@ -35,6 +35,9 @@ public class RecipeClient {
                 uri.queryParam("tag", tags.toArray());
                 uri.queryParam("match", StringUtils.hasText(match) ? match : "all");
             }
+            if (notTags != null && !notTags.isEmpty()) {
+                uri.queryParam("notTag", notTags.toArray());
+            }
             if (ingredientIds != null && !ingredientIds.isEmpty()) {
                 uri.queryParam("ingredientId", ingredientIds.toArray());
             }
@@ -43,7 +46,8 @@ public class RecipeClient {
     }
 
     /** GET /api/recipes/random — one random recipe from the filtered set. 404 if nothing matches. */
-    public Recipe random(String name, List<String> tags, String match, List<Long> ingredientIds) {
+    public Recipe random(String name, List<String> tags, String match, List<String> notTags,
+                         List<Long> ingredientIds) {
         return http.get().uri(uri -> {
             uri.path("/api/recipes/random");
             if (StringUtils.hasText(name)) {
@@ -52,6 +56,9 @@ public class RecipeClient {
             if (tags != null && !tags.isEmpty()) {
                 uri.queryParam("tag", tags.toArray());
                 uri.queryParam("match", StringUtils.hasText(match) ? match : "all");
+            }
+            if (notTags != null && !notTags.isEmpty()) {
+                uri.queryParam("notTag", notTags.toArray());
             }
             if (ingredientIds != null && !ingredientIds.isEmpty()) {
                 uri.queryParam("ingredientId", ingredientIds.toArray());
@@ -66,7 +73,7 @@ public class RecipeClient {
 
     /** Recipe names containing {@code q} (for autocomplete). */
     public List<String> suggestNames(String q) {
-        return list(q, null, null, null, 0, 20).contentOrEmpty().stream()
+        return list(q, null, null, null, null, 0, 20).contentOrEmpty().stream()
                 .map(Recipe::name).distinct().toList();
     }
 
@@ -75,7 +82,7 @@ public class RecipeClient {
         if (!StringUtils.hasText(name)) {
             return null;
         }
-        return list(name.trim(), null, null, null, 0, 25).contentOrEmpty().stream()
+        return list(name.trim(), null, null, null, null, 0, 25).contentOrEmpty().stream()
                 .filter(r -> r.name() != null && r.name().equalsIgnoreCase(name.trim()))
                 .findFirst()
                 .orElse(null);

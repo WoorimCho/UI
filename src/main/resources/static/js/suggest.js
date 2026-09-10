@@ -20,7 +20,7 @@
 
   function wire(input) {
     var endpoint = input.getAttribute("data-suggest");
-    if (!endpoint) return;
+    if (!endpoint || input.getAttribute("list")) return;   // already wired
 
     var list = document.createElement("datalist");
     list.id = "sg-" + Math.random().toString(36).slice(2);
@@ -52,7 +52,13 @@
     input.addEventListener("focus", refresh);
   }
 
+  // Wire any not-yet-wired data-suggest inputs under `root` (default: document).
+  // Forms that clone rows at runtime (the recipe builder) call this after adding one.
+  window.rewireSuggests = function (root) {
+    (root || document).querySelectorAll("input[data-suggest]").forEach(wire);
+  };
+
   document.addEventListener("DOMContentLoaded", function () {
-    document.querySelectorAll("input[data-suggest]").forEach(wire);
+    window.rewireSuggests(document);
   });
 })();

@@ -71,7 +71,7 @@
 
     <div class="actions">
         <a class="btn" th:href="@{/ingredients/{id}/edit(id=${ingredient.id})}">✏️ Edit name &amp; tags</a>
-        <a class="btn ghost" th:href="@{/recipes(ingredientId=${ingredient.id})}">Recipes using this</a>
+        <a class="btn ghost" th:href="@{/recipes(ingredient=${ingredient.name})}">Recipes using this</a>
         <form th:action="@{/ingredients/{id}/delete(id=${ingredient.id})}" method="post"
               onsubmit="return confirm('Delete this ingredient?');">
             <button type="submit" class="btn danger">🗑️ Delete</button>

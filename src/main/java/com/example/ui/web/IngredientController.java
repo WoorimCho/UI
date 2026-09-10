@@ -110,7 +110,7 @@ public class IngredientController {
         // that points at it. Block it here instead, with a count the user can act on.
         long usedBy = 0;
         try {
-            usedBy = recipes.list(null, null, "all", List.of(id), 0, 1).totalElements();
+            usedBy = recipes.list(null, null, "all", null, List.of(id), 0, 1).totalElements();
         } catch (RuntimeException ignored) {
             // recipe catalogue unreachable — fall through and let the delete proceed
         }

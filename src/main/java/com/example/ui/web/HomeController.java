@@ -21,7 +21,7 @@ public class HomeController {
     public String home(Model model) {
         try {
             model.addAttribute("ingredientCount", ingredients.list(null, null, null, 0, 1).totalElements());
-            model.addAttribute("recipeCount", recipes.list(null, null, null, null, 0, 1).totalElements());
+            model.addAttribute("recipeCount", recipes.list(null, null, null, null, null, 0, 1).totalElements());
         } catch (RuntimeException e) {
             model.addAttribute("countsUnavailable", true);
         }

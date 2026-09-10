@@ -10,19 +10,26 @@
         <p>Ordered steps with tools, structured quantities, optional / replaceable ingredients, and name variations.</p>
     </div>
 
+    <div class="alert" th:if="${notice}" th:text="${notice}"></div>
+
     <form th:action="@{/recipes}" method="get" class="toolbar">
         <input type="search" name="name" th:value="${name}" placeholder="name contains…">
-        <input type="text" name="tag" th:value="${tag}" placeholder="tag(s), comma-separated" style="max-width:220px;">
+        <input type="text" name="tag" th:value="${tag}" placeholder="tag(s), comma-separated"
+               data-suggest="/suggest/tags" style="max-width:200px;">
         <select name="match">
             <option value="all" th:selected="${match == 'all'}">all</option>
             <option value="any" th:selected="${match == 'any'}">any</option>
         </select>
-        <input type="text" name="ingredientId" th:value="${ingredientId}" placeholder="ingredient id(s)" style="max-width:150px;">
+        <input type="text" name="notTag" th:value="${notTag}" placeholder="exclude tag(s)"
+               data-suggest="/suggest/tags" style="max-width:180px;">
+        <input type="text" name="ingredient" th:value="${ingredient}" placeholder="uses ingredient…"
+               data-suggest="/suggest/ingredients" style="max-width:170px;">
         <button type="submit" class="btn btn-sm">Search</button>
         <a class="btn btn-sm ghost" th:href="@{/recipes}"
-           th:if="${name != null or tag != null or ingredientId != null}">Clear</a>
+           th:if="${name != null or tag != null or notTag != null or ingredient != null}">Clear</a>
         <span class="spacer"></span>
-        <a class="btn btn-sm mint" th:href="@{/recipes/random(name=${name},tag=${tag},match=${match})}">🎲 Surprise me</a>
+        <a class="btn btn-sm mint"
+           th:href="@{/recipes/random(name=${name},tag=${tag},match=${match},notTag=${notTag})}">🎲 Surprise me</a>
         <a class="btn btn-sm ghost" th:href="@{/import}">⬆️ Import CSV</a>
         <a class="btn btn-sm ghost" th:href="@{/recipes/import-url}">🌐 Import from URL</a>
         <a class="btn btn-sm" th:href="@{/recipes/new}">➕ New recipe</a>
@@ -41,10 +48,10 @@
 
     <div class="pagination" th:if="${page.totalPages > 1}">
         <a class="btn btn-sm ghost" th:if="${page.hasPrevious()}"
-           th:href="@{/recipes(name=${name},tag=${tag},match=${match},ingredientId=${ingredientId},page=${pageNo - 1})}">← Prev</a>
+           th:href="@{/recipes(name=${name},tag=${tag},match=${match},notTag=${notTag},ingredient=${ingredient},page=${pageNo - 1})}">← Prev</a>
         <span class="muted" th:text="'Page ' + (${pageNo} + 1) + ' of ' + ${page.totalPages}"></span>
         <a class="btn btn-sm ghost" th:if="${page.hasNext()}"
-           th:href="@{/recipes(name=${name},tag=${tag},match=${match},ingredientId=${ingredientId},page=${pageNo + 1})}">Next →</a>
+           th:href="@{/recipes(name=${name},tag=${tag},match=${match},notTag=${notTag},ingredient=${ingredient},page=${pageNo + 1})}">Next →</a>
     </div>
 </main>
 

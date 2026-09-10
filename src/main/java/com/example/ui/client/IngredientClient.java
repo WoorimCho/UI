@@ -57,6 +57,34 @@ public class IngredientClient {
                 .orElse(null);
     }
 
+    /** {@code name} -> id (exact, case-insensitive), or null when there's no such ingredient. */
+    public Long resolveId(String name) {
+        Ingredient found = findByName(name);
+        return found == null ? null : found.id();
+    }
+
+    /**
+     * Resolve many names in one go -> {trimmed input name: id}. Names that don't
+     * match anything are simply absent from the map, so the caller can diff.
+     */
+    public Map<String, Long> resolveIds(java.util.Collection<String> names) {
+        Map<String, Long> out = new java.util.LinkedHashMap<>();
+        for (String raw : names) {
+            if (!StringUtils.hasText(raw)) {
+                continue;
+            }
+            String key = raw.trim();
+            if (out.containsKey(key)) {
+                continue;
+            }
+            Long id = resolveId(key);
+            if (id != null) {
+                out.put(key, id);
+            }
+        }
+        return out;
+    }
+
     public Ingredient get(long id) {
         return http.get().uri("/api/ingredients/{id}", id).retrieve().body(Ingredient.class);
     }
@@ -113,11 +141,12 @@ public class IngredientClient {
 
     // ── tags ─────────────────────────────────────────────────────────────────
 
-    public PageResult<Tag> tags(String prefix, String namespace, int page, int size) {
+    /** {@code nameContains} matches anywhere in the tag name (the API param is still called {@code prefix}). */
+    public PageResult<Tag> tags(String nameContains, String namespace, int page, int size) {
         return http.get().uri(uri -> {
             uri.path("/api/tags").queryParam("page", page).queryParam("size", size);
-            if (StringUtils.hasText(prefix)) {
-                uri.queryParam("prefix", prefix);
+            if (StringUtils.hasText(nameContains)) {
+                uri.queryParam("prefix", nameContains);
             }
             if (StringUtils.hasText(namespace)) {
                 uri.queryParam("namespace", namespace);
@@ -132,9 +161,9 @@ public class IngredientClient {
                 .retrieve().body(Tag.class);
     }
 
-    /** Tag names starting with {@code prefix} (for autocomplete). */
-    public List<String> suggestTagNames(String prefix) {
-        return tags(prefix, null, 0, 20).contentOrEmpty().stream().map(Tag::name).toList();
+    /** Tag names containing {@code fragment} anywhere (for search / autocomplete). */
+    public List<String> suggestTagNames(String fragment) {
+        return tags(fragment, null, 0, 20).contentOrEmpty().stream().map(Tag::name).toList();
     }
 
     /** The tag whose name equals {@code name} exactly (case-insensitive), or null. */

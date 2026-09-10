@@ -1,9 +1,11 @@
 package com.example.ui.web;
 
 import com.example.ui.client.BffClient;
+import com.example.ui.client.IngredientClient;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -14,10 +16,12 @@ import org.springframework.web.bind.annotation.ResponseBody;
 public class CalculatorController {
 
     private final BffClient bff;
+    private final IngredientClient ingredients;
     private final SessionSupport sessions;
 
-    public CalculatorController(BffClient bff, SessionSupport sessions) {
+    public CalculatorController(BffClient bff, IngredientClient ingredients, SessionSupport sessions) {
         this.bff = bff;
+        this.ingredients = ingredients;
         this.sessions = sessions;
     }
 
@@ -49,17 +53,29 @@ public class CalculatorController {
     @GetMapping("/recipes/{id}/portions")
     public String portions(@PathVariable long id,
                            @RequestParam(required = false) Double scale,
-                           @RequestParam(required = false) Long anchorIngredientId,
+                           @RequestParam(required = false) String anchorIngredientName,
                            @RequestParam(required = false) Double anchorAmount,
                            @RequestParam(required = false) String anchorUnit,
                            HttpSession session, Model model) {
         model.addAttribute("recipeId", id);
+        model.addAttribute("scale", scale);
+        model.addAttribute("anchorIngredientName", anchorIngredientName);
+
+        Long anchorIngredientId = null;
+        if (StringUtils.hasText(anchorIngredientName)) {
+            anchorIngredientId = ingredients.resolveId(anchorIngredientName.trim());
+            if (anchorIngredientId == null) {
+                model.addAttribute("error", "No ingredient found named \""
+                        + anchorIngredientName.trim() + "\".");
+                return "calculators/portions";
+            }
+        }
+
         boolean asked = scale != null || anchorIngredientId != null || anchorAmount != null;
         if (asked) {
             model.addAttribute("result",
                     bff.portions(id, scale, anchorIngredientId, anchorAmount, anchorUnit, cookie(session)));
         }
-        model.addAttribute("scale", scale);
         return "calculators/portions";
     }
 

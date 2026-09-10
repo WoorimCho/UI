@@ -47,7 +47,7 @@ class PagesRenderTest {
     @Test
     void homeRenders() throws Exception {
         when(ingredients.list(any(), any(), any(), anyInt(), anyInt())).thenReturn(emptyPage());
-        when(recipes.list(any(), any(), any(), any(), anyInt(), anyInt())).thenReturn(emptyPage());
+        when(recipes.list(any(), any(), any(), any(), any(), anyInt(), anyInt())).thenReturn(emptyPage());
 
         mvc.perform(get("/"))
                 .andExpect(status().isOk())
