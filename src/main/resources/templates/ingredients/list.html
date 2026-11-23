@@ -86,13 +86,7 @@
         Figures are per the ingredient's own basis grams (usually 100). Click a column to sort; click again to flip.
         Ingredients with no figure sort to the end.</p>
 
-    <div class="pagination" th:if="${page.totalPages > 1}">
-        <a class="btn btn-sm ghost" th:if="${page.hasPrevious()}"
-           th:href="@{/ingredients(name=${name},tag=${tag},match=${match},notTag=${notTag},sort=${sortField},dir=${sortDir},page=${pageNo - 1})}">← Prev</a>
-        <span class="muted" th:text="'Page ' + (${pageNo} + 1) + ' of ' + ${page.totalPages}">Page 1</span>
-        <a class="btn btn-sm ghost" th:if="${page.hasNext()}"
-           th:href="@{/ingredients(name=${name},tag=${tag},match=${match},notTag=${notTag},sort=${sortField},dir=${sortDir},page=${pageNo + 1})}">Next →</a>
-    </div>
+    <nav th:replace="~{fragments/layout :: pager(${pager})}"></nav>
 </main>
 
 <footer th:replace="~{fragments/layout :: footer}"></footer>

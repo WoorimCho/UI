@@ -9,7 +9,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /** Tag management (tags are owned by IngredientCatalogue and shared by both catalogues). */
 @Controller
@@ -25,11 +27,21 @@ public class TagController {
     public String list(@RequestParam(required = false) String prefix,
                        @RequestParam(required = false) String namespace,
                        @RequestParam(defaultValue = "0") int page,
+                       @RequestParam(name = "jump", required = false) Integer jump,
                        Model model) {
-        model.addAttribute("page", client.tags(prefix, namespace, page, 40));
+        if (jump != null && jump > 0) {
+            page = jump - 1;
+        }
+        var result = client.tags(prefix, namespace, page, 40);
+        model.addAttribute("page", result);
         model.addAttribute("prefix", prefix);
         model.addAttribute("namespace", namespace);
         model.addAttribute("pageNo", page);
+
+        Map<String, String> pagerParams = new LinkedHashMap<>();
+        pagerParams.put("prefix", prefix);
+        pagerParams.put("namespace", namespace);
+        model.addAttribute("pager", new Pager("/tags", pagerParams, page, result.totalPages()));
         return "tags/list";
     }
 

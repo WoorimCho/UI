@@ -56,5 +56,19 @@
     <div class="alert error" th:if="${error}" th:text="${error}"></div>
     <div class="alert ok" th:if="${notice}" th:text="${notice}"></div>
 </div>
+
+<!-- list-page pager: Prev / "go to page N" form / Next — model attribute built in web/Pager.java -->
+<nav th:fragment="pager(pager)" class="pagination" th:if="${pager != null and pager.show}" aria-label="Pagination">
+    <a class="btn btn-sm ghost" th:if="${pager.prevHref != null}" th:href="${pager.prevHref}">← Prev</a>
+    <form class="pager-jump" method="get" th:action="@{${pager.path}}">
+        <input type="hidden" th:each="e : ${pager.params}" th:name="${e.key}" th:value="${e.value}">
+        <label>Page
+            <input type="number" name="jump" min="1" th:max="${pager.totalPages}"
+                   th:value="${pager.humanPage}" aria-label="Go to page"></label>
+        <span th:text="'of ' + ${pager.totalPages}">of 1</span>
+        <button class="btn btn-sm" type="submit">Go</button>
+    </form>
+    <a class="btn btn-sm ghost" th:if="${pager.nextHref != null}" th:href="${pager.nextHref}">Next →</a>
+</nav>
 </body>
 </html>

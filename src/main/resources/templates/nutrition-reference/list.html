@@ -80,6 +80,8 @@
         </tbody>
     </table>
 
+    <nav th:replace="~{fragments/layout :: pager(${pager})}"></nav>
+
     <div class="card">
         <h2>Add a food</h2>
         <p class="muted">Figures per 100&nbsp;g (or set a different basis). Name must be new; leave any figure blank.</p>

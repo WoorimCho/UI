@@ -14,13 +14,14 @@ public class WebConfig implements WebMvcConfigurer {
         this.authInterceptor = authInterceptor;
     }
 
+    /**
+     * The interceptor sees every request and decides per route (see
+     * {@link AuthInterceptor}); only static assets and the error page are skipped.
+     */
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(authInterceptor)
-                .addPathPatterns("/account/**",
-                        "/recipes/*/nutrition", "/recipes/*/calories", "/recipes/*/portions",
-                        "/recipes/*/portions.json",
-                        "/recipes/*/composed",
-                        "/favourites/**");
+                .addPathPatterns("/**")
+                .excludePathPatterns("/css/**", "/js/**", "/favicon.ico", "/error", "/actuator/**");
     }
 }

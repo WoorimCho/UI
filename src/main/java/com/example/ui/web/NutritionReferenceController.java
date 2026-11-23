@@ -13,6 +13,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /** Browse and extend the nutrition reference (common foods, per 100 g). */
@@ -38,13 +39,25 @@ public class NutritionReferenceController {
         this.client = client;
     }
 
+    private static final int PAGE_SIZE = 25;
+
     @GetMapping("/nutrition-reference")
     public String list(@RequestParam(required = false) String name,
                        @RequestParam(required = false) String sort,
                        @RequestParam(required = false, defaultValue = "asc") String dir,
+                       @RequestParam(defaultValue = "0") int page,
+                       @RequestParam(name = "jump", required = false) Integer jump,
                        Model model) {
+        if (jump != null && jump > 0) {
+            page = jump - 1;
+        }
         String sortQuery = Sorts.query(sort, dir, SORTABLE);
-        model.addAttribute("rows", client.nutritionReference(name, sortQuery));
+        // the catalogue endpoint returns the whole (small) reference — paginate here
+        List<IngredientClient.NutritionRef> all = client.nutritionReference(name, sortQuery);
+        int totalPages = Math.max(1, (all.size() + PAGE_SIZE - 1) / PAGE_SIZE);
+        page = Math.min(Math.max(page, 0), totalPages - 1);
+        int from = page * PAGE_SIZE;
+        model.addAttribute("rows", all.subList(from, Math.min(from + PAGE_SIZE, all.size())));
 
         MultiValueMap<String, String> base = new LinkedMultiValueMap<>();
         base.add("name", name);
@@ -52,6 +65,12 @@ public class NutritionReferenceController {
         model.addAttribute("sortField", sort == null ? "" : sort);
         model.addAttribute("sortDir", "desc".equalsIgnoreCase(dir) ? "desc" : "asc");
         model.addAttribute("name", name);
+
+        Map<String, String> pagerParams = new LinkedHashMap<>();
+        pagerParams.put("name", name);
+        pagerParams.put("sort", sort);
+        pagerParams.put("dir", dir);
+        model.addAttribute("pager", new Pager("/nutrition-reference", pagerParams, page, totalPages));
         return "nutrition-reference/list";
     }
 

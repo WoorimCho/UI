@@ -48,13 +48,7 @@
     </table>
     <p class="card muted" th:if="${page.contentOrEmpty().isEmpty()}">No tags match.</p>
 
-    <div class="pagination" th:if="${page.totalPages > 1}">
-        <a class="btn btn-sm ghost" th:if="${page.hasPrevious()}"
-           th:href="@{/tags(prefix=${prefix},namespace=${namespace},page=${pageNo - 1})}">← Prev</a>
-        <span class="muted" th:text="'Page ' + (${pageNo} + 1) + ' of ' + ${page.totalPages}"></span>
-        <a class="btn btn-sm ghost" th:if="${page.hasNext()}"
-           th:href="@{/tags(prefix=${prefix},namespace=${namespace},page=${pageNo + 1})}">Next →</a>
-    </div>
+    <nav th:replace="~{fragments/layout :: pager(${pager})}"></nav>
 
     <div class="card">
         <h2>Merge tags</h2>

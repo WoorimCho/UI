@@ -10,3 +10,6 @@ compose.yaml
 *.md
 *.log
 UI/
+
+# Local secrets
+.env

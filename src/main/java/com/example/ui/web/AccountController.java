@@ -185,7 +185,7 @@ public class AccountController {
         } else {
             users.addFavoriteRecipe(id, recipeId);
         }
-        return "redirect:" + (back != null && back.startsWith("/") ? back : "/account/favourites");
+        return "redirect:" + SafeRedirect.localPath(back, "/account/favourites");
     }
 
     /**

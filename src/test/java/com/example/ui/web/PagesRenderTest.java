@@ -28,7 +28,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * The templates render and the auth guard bites. Downstream clients are mocked —
  * this is the view + routing layer, not an integration test.
  */
-@WebMvcTest({HomeController.class, AuthController.class, IngredientController.class, AccountController.class})
+@WebMvcTest({HomeController.class, AuthController.class, IngredientController.class, AccountController.class,
+        RecipeController.class, TagController.class, NutritionReferenceController.class})
 @Import({SessionSupport.class, AuthInterceptor.class, GlobalModelAdvice.class, WebConfig.class, SecurityConfig.class})
 class PagesRenderTest {
 
@@ -74,5 +75,29 @@ class PagesRenderTest {
         mvc.perform(get("/account"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrlPattern("/login*"));
+    }
+
+    @Test
+    void recipeListRenders() throws Exception {
+        when(recipes.list(any(), any(), any(), any(), any(), any(), anyInt(), anyInt())).thenReturn(emptyPage());
+        mvc.perform(get("/recipes"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Recipes")));
+    }
+
+    @Test
+    void tagListRenders() throws Exception {
+        when(ingredients.tags(any(), any(), anyInt(), anyInt())).thenReturn(emptyPage());
+        mvc.perform(get("/tags"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Merge tags")));
+    }
+
+    @Test
+    void nutritionReferenceListRenders() throws Exception {
+        when(ingredients.nutritionReference(any(), any())).thenReturn(List.of());
+        mvc.perform(get("/nutrition-reference"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Nutrition reference")));
     }
 }

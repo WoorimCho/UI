@@ -6,7 +6,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -56,7 +55,7 @@ public class AuthController {
 
         request.changeSessionId();                 // new id on privilege change (SECURITY.md M1)
         sessions.store(session, new CurrentUser(id.accountId(), id.username(), id.displayName(), bffCookie));
-        return "redirect:" + (StringUtils.hasText(next) && next.startsWith("/") ? next : "/");
+        return "redirect:" + SafeRedirect.localPath(next, "/");
     }
 
     @PostMapping("/logout")

@@ -52,10 +52,6 @@ public class ThemeController {
         cookie.setMaxAge(365 * 24 * 60 * 60);
         cookie.setHttpOnly(false); // the head script reads it
         response.addCookie(cookie);
-        return "redirect:" + safeBack(back);
-    }
-
-    private static String safeBack(String back) {
-        return back != null && back.startsWith("/") && !back.startsWith("//") ? back : "/account";
+        return "redirect:" + SafeRedirect.localPath(back, "/account");
     }
 }

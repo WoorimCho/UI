@@ -63,7 +63,11 @@ public class RecipeController {
                        @RequestParam(required = false, defaultValue = "asc") String dir,
                        @RequestParam(name = "inheritedTags", defaultValue = "false") boolean inheritedTags,
                        @RequestParam(defaultValue = "0") int page,
+                       @RequestParam(name = "jump", required = false) Integer jump,
                        Model model) {
+        if (jump != null && jump > 0) {
+            page = jump - 1;
+        }
         String sortQuery = Sorts.query(sort, dir, SORTABLE);
         List<String> tagTerms = IngredientController.splitCsv(tag);
         List<String> notTagTerms = IngredientController.splitCsv(notTag);
@@ -93,6 +97,17 @@ public class RecipeController {
         model.addAttribute("sortLinks", Sorts.links("/recipes", base, sort, dir, SORTABLE.keySet()));
         model.addAttribute("sortField", sort == null ? "" : sort);
         model.addAttribute("sortDir", "desc".equalsIgnoreCase(dir) ? "desc" : "asc");
+
+        Map<String, String> pagerParams = new LinkedHashMap<>();
+        pagerParams.put("name", name);
+        pagerParams.put("tag", tag);
+        pagerParams.put("match", match);
+        pagerParams.put("notTag", notTag);
+        pagerParams.put("ingredient", ingredient);
+        pagerParams.put("inheritedTags", inheritedTags ? "true" : null);
+        pagerParams.put("sort", sort);
+        pagerParams.put("dir", dir);
+        model.addAttribute("pager", new Pager("/recipes", pagerParams, page, result.totalPages()));
 
         model.addAttribute("name", name);
         model.addAttribute("tag", tag);
@@ -248,11 +263,22 @@ public class RecipeController {
     }
 
     /**
-     * Resolve every ingredient name the form mentions to a catalogue id. Returns
-     * the {name: id} map, or {@code null} after adding an {@code error} to the
-     * model when one or more names don't match anything.
+     * Guard the recipe body: at least one ingredient line, within the size limits
+     * (checked before any lookup — resolving is one catalogue call per name), and
+     * every ingredient name (lines + replacements) resolves to an existing
+     * catalogue id. Returns the {name: id} map, or {@code null} after putting an
+     * {@code error} on the model.
      */
     private Map<String, Long> resolveOrReport(RecipeForm form, Model model) {
+        if (!form.hasLineIngredient()) {
+            model.addAttribute("error", "A recipe needs at least one ingredient.");
+            return null;
+        }
+        String tooBig = form.limitViolation();
+        if (tooBig != null) {
+            model.addAttribute("error", tooBig);
+            return null;
+        }
         List<String> names = form.allIngredientNames();
         Map<String, Long> resolved = names.isEmpty() ? Map.of() : ingredients.resolveIds(names);
         List<String> missing = names.stream().filter(n -> !resolved.containsKey(n)).toList();

@@ -256,7 +256,10 @@ textarea { min-height: 70px; resize: vertical; }
 .line.conflict { background: #FEF2F5; border-left: 3px solid var(--danger); padding-left: 12px; border-radius: 6px; }
 .subs { margin-top: 6px; font-size: 14px; color: var(--plum-soft); }
 
-.pagination { display: flex; gap: 8px; align-items: center; margin-top: 16px; }
+.pagination { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 16px; }
+.pager-jump { display: flex; align-items: center; gap: 6px; margin: 0; }
+.pager-jump label { display: flex; align-items: center; gap: 6px; margin: 0; font-weight: 600; }
+.pager-jump input[type=number] { width: 4.5rem; padding: 7px 10px; }
 
 @media (max-width: 720px) {
     .container { padding: 0 14px; margin: 20px auto; }

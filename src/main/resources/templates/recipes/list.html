@@ -60,13 +60,7 @@
     </div>
     <p class="card muted" th:if="${page.contentOrEmpty().isEmpty()}">No recipes match.</p>
 
-    <div class="pagination" th:if="${page.totalPages > 1}">
-        <a class="btn btn-sm ghost" th:if="${page.hasPrevious()}"
-           th:href="@{/recipes(name=${name},tag=${tag},match=${match},notTag=${notTag},ingredient=${ingredient},inheritedTags=${inheritedTags},sort=${sortField},dir=${sortDir},page=${pageNo - 1})}">← Prev</a>
-        <span class="muted" th:text="'Page ' + (${pageNo} + 1) + ' of ' + ${page.totalPages}"></span>
-        <a class="btn btn-sm ghost" th:if="${page.hasNext()}"
-           th:href="@{/recipes(name=${name},tag=${tag},match=${match},notTag=${notTag},ingredient=${ingredient},inheritedTags=${inheritedTags},sort=${sortField},dir=${sortDir},page=${pageNo + 1})}">Next →</a>
-    </div>
+    <nav th:replace="~{fragments/layout :: pager(${pager})}"></nav>
 </main>
 
 <footer th:replace="~{fragments/layout :: footer}"></footer>

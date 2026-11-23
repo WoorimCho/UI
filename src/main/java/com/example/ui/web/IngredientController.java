@@ -51,9 +51,14 @@ public class IngredientController {
                        @RequestParam(required = false) String sort,
                        @RequestParam(required = false, defaultValue = "asc") String dir,
                        @RequestParam(defaultValue = "0") int page,
+                       @RequestParam(name = "jump", required = false) Integer jump,
                        Model model) {
+        if (jump != null && jump > 0) {
+            page = jump - 1;
+        }
         String sortQuery = Sorts.query(sort, dir, SORTABLE);
-        model.addAttribute("page", client.list(name, splitCsv(tag), match, splitCsv(notTag), sortQuery, page, 24));
+        var result = client.list(name, splitCsv(tag), match, splitCsv(notTag), sortQuery, page, 24);
+        model.addAttribute("page", result);
 
         MultiValueMap<String, String> base = new LinkedMultiValueMap<>();
         base.add("name", name);
@@ -63,6 +68,15 @@ public class IngredientController {
         model.addAttribute("sortLinks", Sorts.links("/ingredients", base, sort, dir, SORTABLE.keySet()));
         model.addAttribute("sortField", sort == null ? "" : sort);
         model.addAttribute("sortDir", "desc".equalsIgnoreCase(dir) ? "desc" : "asc");
+
+        Map<String, String> pagerParams = new LinkedHashMap<>();
+        pagerParams.put("name", name);
+        pagerParams.put("tag", tag);
+        pagerParams.put("match", match);
+        pagerParams.put("notTag", notTag);
+        pagerParams.put("sort", sort);
+        pagerParams.put("dir", dir);
+        model.addAttribute("pager", new Pager("/ingredients", pagerParams, page, result.totalPages()));
 
         model.addAttribute("name", name);
         model.addAttribute("tag", tag);

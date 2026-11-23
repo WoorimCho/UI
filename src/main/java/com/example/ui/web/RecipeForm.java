@@ -67,6 +67,40 @@ public class RecipeForm {
         return f;
     }
 
+    /** True when at least one ingredient-line row carries a name (replacements alone don't count). */
+    public boolean hasLineIngredient() {
+        return lineIngredientName.stream().anyMatch(StringUtils::hasText);
+    }
+
+    // The UI mirrors RecipeCatalogue's limits (its Dto/Limits) so an oversized form is refused here,
+    // before allIngredientNames() turns into one catalogue lookup per name. RecipeCatalogue stays
+    // authoritative. SECURITY.md N4.
+    static final int MAX_INGREDIENT_LINES = 100;
+    static final int MAX_STEPS = 200;
+    static final int MAX_REPLACEMENTS_PER_LINE = 10;
+    static final int MAX_TAGS = 50;
+
+    /** A user-facing message when the form is over a limit, otherwise {@code null}. It only counts — no I/O. */
+    public String limitViolation() {
+        if (count(lineIngredientName) > MAX_INGREDIENT_LINES) {
+            return "A recipe can have at most " + MAX_INGREDIENT_LINES + " ingredient lines.";
+        }
+        if (count(stepText) > MAX_STEPS) {
+            return "A recipe can have at most " + MAX_STEPS + " steps.";
+        }
+        if (lineReplacementNames.stream().anyMatch(r -> csv(r).size() > MAX_REPLACEMENTS_PER_LINE)) {
+            return "An ingredient can have at most " + MAX_REPLACEMENTS_PER_LINE + " replacements.";
+        }
+        if (csv(tags).size() > MAX_TAGS) {
+            return "A recipe can have at most " + MAX_TAGS + " tags.";
+        }
+        return null;
+    }
+
+    private static long count(List<String> values) {
+        return values.stream().filter(StringUtils::hasText).count();
+    }
+
     /** Every distinct ingredient name mentioned — line ingredients and replacements — for bulk resolution. */
     public List<String> allIngredientNames() {
         Set<String> out = new LinkedHashSet<>();

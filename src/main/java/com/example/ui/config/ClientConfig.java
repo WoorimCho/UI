@@ -27,7 +27,7 @@ public class ClientConfig {
     private final InternalAuthClientInterceptor internalAuth;
 
     public ClientConfig(CircuitBreakerRegistry breakers,
-                        @Value("${internal-auth.secret:dev-internal-secret-change-me}") String internalAuthSecret) {
+                        @Value("${internal-auth.secret:}") String internalAuthSecret) {
         this.breakers = breakers;
         this.internalAuth = new InternalAuthClientInterceptor(internalAuthSecret);
     }

@@ -30,8 +30,8 @@ The UI keeps **its own `HttpSession`**. Login = User `POST /api/authenticate`
 | `/login`, `/register`, `POST /logout` | auth |
 | `/ingredients` … `/ingredients/{id}` `/new` `/{id}/edit` `POST /{id}/nutrition` `POST /{id}/delete` | ingredient CRUD + nutrition + **density (g/ml)**; name search + autocomplete; filter by tag / **exclude tag** (substring); **click a column to sort** — name, each nutrient, density (empties last); delete blocked when a recipe uses it |
 | `/tags` `POST /tags` `POST /tags/{id}/delete` `POST /tags/merge` | tag browser (**substring search** — "vegan" finds "diet:vegan"); **merge by name or id** |
-| `/nutrition-reference` `POST /nutrition-reference` | browse (**click a column to sort** — food, each nutrient) + **add a food** |
-| `/recipes` … `/recipes/{id}` `/random` `/new` `/{id}/edit` `POST /{id}/delete` | recipe CRUD; dynamic step/ingredient form — ingredients & replacements entered **by name** (autocomplete); filter by tag, **exclude tag** ("not vegan"), or "uses ingredient" (by name); **"include ingredient tags"** widens tag matching to each recipe's inherited tags; sort by name / creator / version; "Surprise me" |
+| `/nutrition-reference` `POST /nutrition-reference` | browse (**click a column to sort** — food, each nutrient), paged 25/page (sliced UI-side) + **add a food** |
+| `/recipes` … `/recipes/{id}` `/random` `/new` `/{id}/edit` `POST /{id}/delete` | recipe CRUD (**≥ 1 ingredient required**, and every ingredient must already exist in the catalogue — an unknown name is rejected with "add it on the Ingredients page first"); dynamic step/ingredient form — ingredients & replacements entered **by name** (autocomplete); filter by tag, **exclude tag** ("not vegan"), or "uses ingredient" (by name); **"include ingredient tags"** widens tag matching to each recipe's inherited tags; sort by name / creator / version; "Surprise me" |
 | `/recipes/import-url` `POST …/preview` `POST …/commit` | **import a recipe from a URL** (via the `recipe-crawler` service): preview the parsed draft, then create it |
 | `/recipes/crawl` `POST /recipes/crawl` | **crawl a site** from seed URLs — same-host link-following, robots.txt + rate-limited, bulk import; dry-run option |
 | `/recipes/{id}/nutrition` `/calories` `/portions` `/portions.json` | calculators (login-gated) — total / per-serving / **per 100 g** / **per gram**; nutrition shows a **weight ⇄ volume** column; portions has a **live batch-size slider**, an *as-written / grams / ml / **US volume** (cups, tbsp)* toggle, a **Calories** column and a live **Batch ≈ N g · N kcal** total; "scale from one line" takes the anchor ingredient **by name** and bridges volume↔weight via density |
@@ -47,6 +47,12 @@ holds separators, so the search keeps working as you add more. Progressive
 enhancement: the underlying `<input>` still carries the comma-joined value, so
 without JS it's a plain text field and the server is unchanged.
 
+**Pager** (`fragments/layout :: pager`, backed by `web/Pager.java`): every list
+page (ingredients, recipes, tags, nutrition reference) keeps Prev / Next and adds
+a **"Page [ N ] of M"** number input + Go — submits `jump` (1-based; each
+controller converts to the 0-based page index), carrying the current filters +
+sort. Works without JS.
+
 **Themes:** four light presets — Cherry Blossom 🌸, Blueberry 🫐, Matcha 🍵,
 Lavender 🪻 — as `[data-theme]` blocks in `static/css/app.css`. Chosen on the
 profile page, stored in a year-long `ui.theme` cookie, applied before first
@@ -56,18 +62,24 @@ heading).
 ## Run
 
 ```bash
+# once: the HMAC secret lives in a git-ignored .env, never in the repo
+cp .env.example .env     # fill in INTERNAL_AUTH_SECRET (openssl rand -hex 24) - the same value in every service
+
 cd .. && docker compose up --build ui      # with the rest of the stack
 
 # local, against the Dockerised downstreams
 ./mvnw spring-boot:run                      # http://localhost:8081
 ```
 
-`spring.thymeleaf.cache=false` → templates hot-reload from `target/classes`.
+`spring.thymeleaf.cache=false` → templates hot-reload from `target/classes`. The UI refuses to
+start without `INTERNAL_AUTH_SECRET` (at least 32 characters; finding N1): in a container it
+comes from the environment, locally `spring.config.import` reads it from `.env`.
 
 ## Configuration (env)
 
 | Var | Default |
 |---|---|
+| `INTERNAL_AUTH_SECRET` | **none** — the HMAC secret every service shares (at least 32 characters), from `.env`; startup fails without it (finding N1) |
 | `INGREDIENT_CATALOGUE_URL` | `http://localhost:8082` |
 | `RECIPE_CATALOGUE_URL` | `http://localhost:8083` |
 | `USER_SERVICE_URL` | `http://localhost:8084` |
@@ -80,7 +92,13 @@ cd .. && docker compose up --build ui      # with the rest of the stack
 ## Tests
 
 ```bash
-./mvnw test     # 5: context load + @WebMvcTest page renders + auth-guard redirect
+./mvnw test     # 163: context load + @WebMvcTest page renders (home, login,
+                #    ingredients / recipes / tags / nutrition-reference lists);
+                #    the access rules (AuthInterceptorTest, AnonymousWritesTest —
+                #    incl. a route-inventory check that fails if a new write route
+                #    is left anonymous); open-redirect cases (SafeRedirectTest,
+                #    OpenRedirectTest); recipe-form limits (RecipeFormLimitsTest);
+                #    the shared-secret check (InternalAuthSecretTest)
 ```
 
 ## Resilience
@@ -99,9 +117,26 @@ rate).
 
 ## Security
 
-`spring-boot-starter-security` + `config/SecurityConfig` — `permitAll()` (the UI
-keeps its own session guard; anonymous browsing is a feature), Spring's form
-login / basic / logout disabled. It's on for the cross-cutting hardening:
+`spring-boot-starter-security` + `config/SecurityConfig` — `permitAll()` at the
+Spring Security layer, with the access rules in the UI's own `AuthInterceptor`
+(below); Spring's form login / basic / logout disabled. It's on for the
+cross-cutting hardening:
+
+- **Who may do what** (finding N7, fixed 2026-10-14): *reading is public*;
+  **every write needs a login** — any request that isn't GET / HEAD / OPTIONS,
+  default-deny, so a new POST route is protected without being listed. Only sign
+  in / up / out and the cookie-only theme switch work anonymously. A few pages
+  need a login just to open: `/account/**`, the per-recipe calculators, the
+  new / edit forms, and the import / crawl tools. The rule is applied to the
+  route the handler mapping matched (`/ingredients/{id}/edit`), not the raw URL,
+  and a refused request creates no session. A refused write sends you to
+  `/login`, then back to the page you were on.
+- **No open redirects** (finding N3): the login `next`, favourites `back` and
+  theme `back` values all go through `SafeRedirect` — a single-slash same-site
+  path only (no `//host`, `/\host`, control characters or `{braces}`).
+- **Form limits** (finding N4): a recipe form is refused before any ingredient
+  lookup if it has more than 100 ingredient lines, 200 steps, 10 replacements on
+  a line or 50 tags (resolving names is one catalogue call each).
 
 - **CSRF** on for state-changing form posts; `th:action` auto-injects the hidden
   `_csrf` field. The one `fetch()` (portion slider) is a GET.
@@ -114,7 +149,7 @@ login / basic / logout disabled. It's on for the cross-cutting hardening:
   `X-Internal-Auth` header (`internal/`), signed with the session's account id.
 
 See `../IngredientCatalogue/SECURITY.md` for the full assessment (H2 / M1 / M5 /
-C1 / C2 addressed 2026-09-09).
+C1 / C2 addressed 2026-09-09; N3 / N4 / N7 2026-10-14).
 
 ## Notes / known gaps
 
